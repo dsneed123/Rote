@@ -13,7 +13,7 @@ goal ──▶ discovery (LLM observe→decide→act) ──▶ capability.yaml 
                     └─ human approval / takeover ─────┴── review ───────┴─ escalate to operator
 ```
 
-The design write-up is in [REPORT.md](REPORT.md). Evidence of real runs is in [evidence/](evidence/).
+Evidence of real runs is in [evidence/](evidence/).
 
 ## Setup
 
@@ -137,7 +137,7 @@ session over CDP.
 | `rote/store.py`, `rote/cli.py` | artifact storage and the command line |
 | `library/` | app profiles, policies, capabilities and tenant overlays (the reviewed artifacts) |
 | `mockapp/corelink.py` | the target application |
-| `ai.py` | Ollama client for the GX10 (see `ai-guide.pdf`) |
+| `ai.py` | Ollama client for the GX10 |
 | `tests/` | unit + browser integration tests |
 
 `src/` and `main.py` are an earlier prototype of this project: a one-shot
