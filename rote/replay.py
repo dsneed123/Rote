@@ -332,10 +332,14 @@ class Replayer:
             if found:
                 raise Interrupted(found)
             if time.monotonic() >= deadline:
-                observed = self.redactor.text(" | ".join(
-                    f"{k}={v}" for k, v in self.surface.location().items()))
-                raise CheckpointTimeout(checks, observed)
+                raise CheckpointTimeout(checks, self._observed())
             time.sleep(0.2)
+
+    def _observed(self) -> str:
+        """Where we are and what the screen says, redacted: for a failure report."""
+        where = " | ".join(f"{k}={v}" for k, v in self.surface.location().items())
+        lines = [line.strip() for line in self.surface.visible_text().splitlines() if line.strip()]
+        return self.redactor.text(f"{where} :: {' / '.join(lines)[:240]}")
 
     def _interrupt(self) -> Detected | None:
         return detect(self.surface, self.profile.detectors)
@@ -421,8 +425,7 @@ class Replayer:
                     expected: str = "", observed: str | None = None, phase: str = "") -> None:
         """Nothing known explains the screen. Ask a human, or stop with evidence."""
         evidence = self.log.capture(self.surface, f"{kind.value}-{step.id if step else 'run'}", aria=True)
-        observed = observed or self.redactor.text(" | ".join(
-            f"{k}={v}" for k, v in self.surface.location().items()))
+        observed = observed or self._observed()
         failure = Failure(kind=kind, message=message, step_id=step.id if step else None,
                           step_index=index, expected=expected, observed=observed, evidence=evidence)
         self.log.event("unexpected", kind=kind.value, step=step.id if step else None,

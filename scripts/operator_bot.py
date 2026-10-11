@@ -56,9 +56,16 @@ def main() -> int:
                 time.sleep(1)     # let the capture binding deliver the click
             requests.post(f"{args.console}/resolve", json={
                 "action": "done", "note": f"Dismissed an unexpected '{args.button}' prompt."}, timeout=5)
-        else:
+        elif args.policy in open_["options"]:
             requests.post(f"{args.console}/resolve", json={
                 "action": args.policy, "note": f"Reviewed the screen; {args.policy}d."}, timeout=5)
+        else:
+            # Asked for something this bot can't do (e.g. a stuck agent): a
+            # person would look and decide; the bot gives up cleanly instead.
+            fallback = "abort" if "abort" in open_["options"] else "deny"
+            requests.post(f"{args.console}/resolve", json={
+                "action": fallback, "note": f"Bot cannot handle a {open_['reason']} intervention."}, timeout=5)
+            print(f"[operator] {open_['reason']} is beyond this bot; resolved {fallback}")
         print("[operator] handed control back")
         handled += 1
     return 0

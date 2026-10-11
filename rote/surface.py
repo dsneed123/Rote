@@ -112,8 +112,8 @@ class Surface(Protocol):
     def visible_text(self) -> str: ...
     def location(self) -> dict[str, str]: ...
     def observe(self, screenshot: Path | None = None) -> Observation: ...
-    def locators_for(self, element_id: int) -> tuple[Target, str]: ...
-    def locators_for_value(self, value: str) -> tuple[Target, str]: ...
+    def locators_for(self, element_id: int, extra: list[Locator] | None = None) -> tuple[Target, str]: ...
+    def locators_for_value(self, value: str) -> tuple[Target, str, str | None]: ...
     def screenshot(self, path: Path) -> Path: ...
     def accessibility_snapshot(self) -> str: ...
 
@@ -291,13 +291,15 @@ _JS_HARVEST = _JS_HELPERS + r"""
 """
 
 _JS_FIND_VALUE = _JS_HELPERS + r"""
-([value, startId]) => {
-  // The deepest elements whose whole text is exactly the value.
+([value, startId, contains]) => {
+  // The deepest elements whose whole text is exactly the value — or, with
+  // `contains`, the deepest that contain it ("... CONFIRMATION 48211").
   const want = value.replace(/\s+/g, ' ').trim(); const hits = [];
+  const match = t => contains ? t.includes(want) : t === want;
   for (const el of document.querySelectorAll('body *')) {
-    if (!vis(el) || txt(el) !== want) continue;
-    if ([...el.children].some(c => txt(c) === want)) continue;
-    hits.push(el.closest('td, th') || el);
+    if (!vis(el) || !match(txt(el))) continue;
+    if ([...el.children].some(c => match(txt(c)))) continue;
+    hits.push(contains ? el : (el.closest('td, th') || el));
   }
   let id = startId;
   return [...new Set(hits)].map(el => { el.setAttribute('data-rote-id', String(id)); return id++; });
@@ -664,7 +666,7 @@ class WebSurface:
                 return frame, handle.first
         raise KeyError(f"no element {element_id} on the current screen")
 
-    def locators_for(self, element_id: int) -> tuple[Target, str]:
+    def locators_for(self, element_id: int, extra: list[Locator] | None = None) -> tuple[Target, str]:
         """Ranked locators for an observed element, each verified against the
         live page to resolve uniquely to that same element.
 
@@ -676,12 +678,16 @@ class WebSurface:
         candidates: list[Locator] = []
         if info["name"] and info["role"] not in ("generic", "cell"):
             candidates.append(RoleLocator(role=info["role"], name=_xpath_free(info["name"])))
-        if info["label"]:
+        # A data cell's left-hand neighbour is coincidence, not a label: in a
+        # table with headers, label_near broke on a tenant that reorders
+        # columns (evidence/replay-10). Use it for cells only outside tables.
+        if info["label"] and not (info["role"] == "cell" and info["cells"]):
             candidates.append(LabelNearLocator(label=_xpath_free(info["label"]), role=info["role"]))
         if info["text"]:
             candidates.append(TextLocator(text=_xpath_free(info["text"])))
         for cell in info["cells"]:
             candidates.append(TableCellLocator(**cell))
+        candidates += extra or []
         if info["css"]:
             candidates.append(CssLocator(css=info["css"]))
 
@@ -703,27 +709,58 @@ class WebSurface:
         name = info["name"] or info["label"] or info["text"] or info["tag"]
         return Target(description=f"{info['role']} {name!r}", frame=ref, strategies=verified), name
 
-    def locators_for_value(self, value: str) -> tuple[Target, str]:
-        """Locate the screen element showing exactly `value`, for extraction."""
+    def _find_value(self, value: str, contains: bool) -> list[int]:
         hits: list[int] = []
         start = 10_000
         for frame in self._frames():
             try:
-                ids = frame.evaluate(_JS_FIND_VALUE, [value, start])
+                ids = frame.evaluate(_JS_FIND_VALUE, [value, start, contains])
             except Exception:
                 continue
             hits += ids
             start += len(ids) + 1
+        return hits
+
+    def locators_for_value(self, value: str) -> tuple[Target, str, str | None]:
+        """Locate the screen element showing `value`, for extraction.
+
+        Returns (target, value, pattern). If the value is a whole element
+        (a table cell), pattern is None. If it sits inside a sentence
+        ("SHARE S01 OPENED. CONFIRMATION 48211"), the element is located by
+        the words before the value, and `pattern` is a regex that pulls the
+        value out of that sentence on replay.
+        """
+        value = " ".join(value.split())
+        hits = self._find_value(value, contains=False)
+        pattern, extra = None, []
         if len(hits) != 1:
-            raise TargetNotFound(Target(strategies=[TextLocator(text=value)]),
-                                 [f"value shown {len(hits)} times on screen; need exactly one"])
-        target, _ = self.locators_for(hits[0])
-        # Locate a value by *what it is*, not by the value itself: a text
-        # locator for "$1,234.56" would only ever find that exact balance.
-        strategies = [s for s in target.strategies if not isinstance(s, (TextLocator, RoleLocator))]
+            hits = self._find_value(value, contains=True)
+            if len(hits) != 1:
+                raise TargetNotFound(Target(strategies=[TextLocator(text=value)]),
+                                     [f"value shown {len(hits)} times on screen; need exactly one"])
+            frame, handle = self._tagged(hits[0])
+            full = " ".join(handle.inner_text().split())
+            before = full[: full.index(value)].split()
+            anchor_words: list[str] = []
+            for word in reversed(before):
+                if re.search(r"\d", word) or len(anchor_words) == 2:
+                    break
+                anchor_words.insert(0, word)
+            if not anchor_words:
+                raise TargetNotFound(Target(strategies=[TextLocator(text=value)]),
+                                     ["value is inside text with no stable words before it"])
+            shape = (r"(\d+)" if value.isdigit() else
+                     r"(\$?[\d,]+(?:\.\d+)?)" if re.fullmatch(r"\$?[\d,]+(?:\.\d+)?", value) else r"(\S+)")
+            pattern = r"\s+".join(re.escape(w) for w in anchor_words) + r"\s*" + shape
+            extra = [TextLocator(text=" ".join(anchor_words), exact=False)]
+        target, _ = self.locators_for(hits[0], extra=extra)
+        # Locate a value by *what it is*, not by the value itself: a locator
+        # for "$1,234.56" would only ever find that exact balance.
+        strategies = [s for s in target.strategies
+                      if not isinstance(s, RoleLocator) and not (isinstance(s, TextLocator) and value in s.text)]
         if not strategies:
             raise TargetNotFound(target, ["only value-based locators found; nothing stable to record"])
-        return target.model_copy(update={"strategies": strategies}), value
+        return target.model_copy(update={"strategies": strategies}), value, pattern
 
     # -- evidence --
 

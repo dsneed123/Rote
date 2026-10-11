@@ -20,7 +20,6 @@ browser session:
 
 from __future__ import annotations
 
-import html
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -138,7 +137,8 @@ class OperatorConsole:
         if self.session.owner != Owner.human:
             raise RuntimeError("take control before resolving")
         events = len(self.session.human_events)
-        self.session.resolve(Resolution(action=action, by="console-operator", note=html.escape(note)))  # type: ignore[arg-type]
+        # Stored as typed; the page escapes when it renders.
+        self.session.resolve(Resolution(action=action, by="console-operator", note=note[:500]))  # type: ignore[arg-type]
         if intervention:
             self.history.append({"reason": intervention.reason, "step_id": intervention.step_id,
                                  "action": action, "by": "console-operator", "note": note,

@@ -365,12 +365,12 @@ class Discoverer:
         except ValueError:
             type_ = ValueType.string
         try:
-            target, _ = self.surface.locators_for_value(shown)
+            target, _, pattern = self.surface.locators_for_value(shown)
             read = self.surface.read(self.surface.resolve(target, 2_000))
         except TargetNotFound as e:
             raise _Problem(f"cannot locate {shown!r} on screen: {e}")
         spec = OutputSpec(type=type_, description=f"read during discovery for: {name}",
-                          sensitivity=Sensitivity.pii)
+                          sensitivity=Sensitivity.pii, pattern=pattern)
         try:
             spec.parse(read)
         except ValueError as e:

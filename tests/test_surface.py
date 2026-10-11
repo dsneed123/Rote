@@ -108,7 +108,7 @@ def test_observe_and_verified_locators(surface):
 
 def test_locators_for_value_prefers_structure(surface):
     to_member(surface)
-    target, _ = surface.locators_for_value("$1,234.56")
+    target, _, _ = surface.locators_for_value("$1,234.56")
     first = target.strategies[0]
     assert first.by == "table_cell" and first.row_value == "PRIMARY SAVINGS" and first.column == "Balance"
 
@@ -127,3 +127,14 @@ def test_profile_labels_redact_names(surface):
     snap = surface.accessibility_snapshot()
     assert "JANE Q SAMPLE" not in snap and "<pii:name>" in snap
     assert surface.redactor.text("thought: JANE Q SAMPLE has $5") == "thought: <pii:name> has <amount>"
+
+
+def test_value_inside_sentence_gets_anchor_and_pattern(surface):
+    surface.page.goto("about:blank")
+    surface.page.set_content("<h3>SHARE MAINTENANCE - CONFIRMATION</h3>"
+                             "<table><tr><td><b>SHARE S01 OPENED. CONFIRMATION 48211</b></td></tr></table>")
+    target, value, pattern = surface.locators_for_value("48211")
+    import re
+    assert pattern and re.search(pattern, "SHARE S07 OPENED. CONFIRMATION 50000").group(1) == "50000"
+    assert target.strategies[0].by == "text" and target.strategies[0].text == "OPENED. CONFIRMATION"
+    assert all("48211" not in str(s.model_dump()) for s in target.strategies)
