@@ -241,7 +241,8 @@ class Redactor:
     def leaks(self, text: str) -> list[str]:
         """What in `text` would be redacted. Used to lint artifacts before saving."""
         found = [label for known, label in self._known.items() if known in text]
-        for name, pattern in (("ssn", SSN), ("email", EMAIL), ("date", DATE)):
+        checks = [("ssn", SSN), ("email", EMAIL), ("date", DATE)] + ([("amount", MONEY)] if self.money else [])
+        for name, pattern in checks:
             if re.search(pattern, text):
                 found.append(name)
         for match in re.finditer(CARD, text):

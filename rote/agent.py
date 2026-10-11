@@ -50,7 +50,7 @@ Actions (field "action"):
   select   element=<number>, value=<option text exactly as listed>
   press    value=<key, e.g. Enter>
   extract  output=<snake_case name>, output_type=string|money|integer|date,
-           value=<the value EXACTLY as shown on screen>
+           value=<REQUIRED: the value copied EXACTLY as shown on screen, e.g. "$1,234.56">
   done     success_text=<short text visible NOW that proves the goal is complete>
   stuck    thought=<why you cannot proceed>; a human operator will take over
 
@@ -61,23 +61,28 @@ Rules:
 - "screen": copy EXACTLY a short heading that identifies the CURRENT screen
   (e.g. a panel title). Never a person's name, a number, or an amount.
 - "step_name": a short snake_case name for this action, e.g. enter_member_number.
+- Fill every field; use "" or -1 for fields the action doesn't use.
 - Reply with JSON only.
 """
 
+# Every field is required and non-null ("" or -1 when unused). With optional
+# fields, the model reliably left `value` out of extract actions and kept the
+# value in its prose; forcing the key makes it fill it in.
 ACTION_SCHEMA: dict = {
     "type": "object",
     "properties": {
         "screen": {"type": "string"},
         "thought": {"type": "string"},
         "action": {"type": "string", "enum": ["click", "fill", "select", "press", "extract", "done", "stuck"]},
-        "element": {"type": ["integer", "null"]},
-        "value": {"type": ["string", "null"]},
-        "output": {"type": ["string", "null"]},
-        "output_type": {"type": ["string", "null"]},
-        "success_text": {"type": ["string", "null"]},
-        "step_name": {"type": ["string", "null"]},
+        "element": {"type": "integer"},
+        "value": {"type": "string"},
+        "output": {"type": "string"},
+        "output_type": {"type": "string", "enum": ["", "string", "money", "integer", "decimal", "date"]},
+        "success_text": {"type": "string"},
+        "step_name": {"type": "string"},
     },
-    "required": ["screen", "thought", "action"],
+    "required": ["screen", "thought", "action", "element", "value", "output", "output_type",
+                 "success_text", "step_name"],
 }
 
 Status = Literal["recorded", "unachievable", "max_steps", "stuck", "denied", "failed"]
@@ -238,15 +243,34 @@ class Discoverer:
     def _decide(self, goal: str, params: dict[str, Param], obs: Observation, recording: Recording) -> dict:
         prompt = self._prompt(goal, params, obs, recording)
         self.log.event("prompt", chars=len(prompt), elements=len(obs.elements))
-        raw = self.ai.ask(prompt, images=[obs.screenshot] if obs.screenshot else None, system=SYSTEM,
-                          format=ACTION_SCHEMA, think=False, temperature=0)
+        raw = self._ask(prompt, obs)
         try:
             decision = json.loads(raw)
         except json.JSONDecodeError as e:
             raise ValueError(f"model reply was not JSON: {raw[:200]}") from e
         if decision.get("action") not in ACTION_SCHEMA["properties"]["action"]["enum"]:
             raise ValueError(f"unknown action {decision.get('action')!r}")
-        return decision
+        # "" and -1 mean "not used" (see ACTION_SCHEMA).
+        return {k: (None if v in ("", -1) else v) for k, v in decision.items()}
+
+    def _ask(self, prompt: str, obs: Observation) -> str:
+        """One structured call. Thinking stays on: with think=False and a format
+        schema, this Ollama build returns the JSON in `thinking` and leaves
+        `content` empty — so read either, content first."""
+        if not hasattr(self.ai, "chat"):          # simple test doubles
+            return self.ai.ask(prompt, images=[obs.screenshot] if obs.screenshot else None,
+                               system=SYSTEM, format=ACTION_SCHEMA, temperature=0)
+        from ai import _message
+        reply = self.ai.chat([_message("system", SYSTEM),
+                              _message("user", prompt, [obs.screenshot] if obs.screenshot else None)],
+                             format=ACTION_SCHEMA, temperature=0)
+        message = reply.get("message", {})
+        content = (message.get("content") or "").strip()
+        if not content and (message.get("thinking") or "").strip().startswith("{"):
+            content = message["thinking"].strip()
+        self.log.event("model_reply", chars=len(content), thinking_chars=len(message.get("thinking") or ""),
+                       eval_ms=round(reply.get("total_duration", 0) / 1e6))
+        return content
 
     def _prompt(self, goal: str, params: dict[str, Param], obs: Observation, recording: Recording) -> str:
         r = self.prompt_redactor
@@ -325,8 +349,15 @@ class Discoverer:
     def _extract(self, d: dict, recording: Recording, turn: int):
         name = re.sub(r"[^a-z0-9_]", "_", (d.get("output") or "").lower()).strip("_")
         shown = (d.get("value") or "").strip()
-        if not name or not shown:
-            raise _Problem("extract needs output and value")
+        if not name:
+            raise _Problem('extract needs "output": a snake_case name for the value')
+        if not shown:
+            shown = self._value_from_thought(d.get("thought") or "", d.get("output_type"), recording)
+            if not shown:
+                raise _Problem('extract needs "value": copy the value exactly as it appears on screen, '
+                               'e.g. "value": "$1,234.56"')
+            self.log.event("value_inferred", turn=turn, output=name,
+                           reason="model omitted value; one candidate in its thought is shown exactly once")
         try:
             type_ = ValueType(d.get("output_type") or "string")
         except ValueError:
@@ -352,13 +383,47 @@ class Discoverer:
                        locators=[s.by for s in target.strategies])
         return None
 
+    def _value_from_thought(self, thought: str, output_type: str | None, recording: Recording) -> str:
+        """A guarded fallback for a model that names the value in prose but
+        leaves `value` empty: accept a candidate only if it fits the declared
+        type, isn't one of our own parameters, and is the *only* such token in
+        the thought that appears exactly once on screen."""
+        patterns = {"money": r"\$\s?[\d,]+(?:\.\d{2})?", "date": r"\b\d{4}-\d{2}-\d{2}\b",
+                    "integer": r"\b\d[\d,]*\b", "decimal": r"\b\d[\d,]*\.\d+\b"}
+        pattern = patterns.get(output_type or "", "|".join(patterns.values()))
+        own = {p.value for p in recording.params.values()}
+        tokens = [t.strip() for t in re.findall(pattern, thought) if t.strip() not in own]
+        located = []
+        for token in dict.fromkeys(tokens):
+            try:
+                self.surface.locators_for_value(token)
+                located.append(token)
+            except TargetNotFound:
+                continue
+        return located[0] if len(located) == 1 else ""
+
     def _done(self, d: dict, obs: Observation, recording: Recording):
-        text = (d.get("success_text") or d.get("screen") or "").strip()
-        frame = self._frame_with(text, obs)
-        if not text or frame is False:
-            raise _Problem(f"success_text {text!r} is not visible on the current screen")
-        if self.redactor.leaks(text) or re.search(r"\$|\d{3,}", text):
-            raise _Problem("success_text must be a heading, not a value, a name or a number")
+        # The model proposes; the system checks. Take the first candidate that
+        # is on screen and is a heading rather than data: the model's
+        # success_text, then its screen heading, then a heading found on screen.
+        candidates = [(d.get("success_text") or "").strip(), (d.get("screen") or "").strip()]
+        candidates += [text for text, _ in self._headings(obs)]
+        rejected = []
+        for text in candidates:
+            if not text:
+                continue
+            frame = self._frame_with(text, obs)
+            if frame is False:
+                rejected.append(f"{text!r} is not on screen")
+            elif self.redactor.leaks(text) or re.search(r"\$|\d{3,}", text) or len(text) > 60:
+                rejected.append(f"{text!r} is data, not a heading")
+            else:
+                break
+        else:
+            raise _Problem("no usable success_text: " + "; ".join(rejected)
+                           + ". Give a short heading visible on this screen")
+        if rejected:
+            self.log.event("success_text_substituted", used=text, rejected=rejected)
         recording.success.append((text, frame))
         # If an identifying parameter is shown on the final screen, assert it
         # too: we reached *this* member's page, not just a member page.

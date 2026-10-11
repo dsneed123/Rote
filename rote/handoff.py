@@ -182,15 +182,48 @@ class ScriptedEscalator:
         return session.wait(0) or resolution
 
 
-class TerminalEscalator:
+class InteractiveEscalator:
+    """Base for escalators with a real person on the other end.
+
+    `present()` shows the intervention (terminal prompt on a thread, a web
+    console...) without blocking; meanwhile this thread waits and keeps
+    *pumping* the surface's event loop. That matters: the operator's clicks
+    reach Rote through an in-page binding that is only delivered while the
+    automation's Playwright loop runs. Block on input() instead, and the
+    operator's actions arrive after control has been handed back, and are
+    lost.
+    """
+
+    def __init__(self, pump: Callable[[int], None] | None = None, timeout_s: float = 900) -> None:
+        self.pump = pump
+        self.timeout_s = timeout_s
+
+    def present(self, intervention: Intervention, session: SessionControl) -> None:
+        raise NotImplementedError
+
+    def escalate(self, intervention: Intervention, session: SessionControl) -> Resolution | None:
+        session.raise_intervention(intervention)
+        self.present(intervention, session)
+        deadline = time.monotonic() + self.timeout_s
+        while time.monotonic() < deadline:
+            resolution = session.wait(0)
+            if resolution is not None:
+                return resolution
+            if self.pump:
+                self.pump(200)
+            else:
+                time.sleep(0.2)
+        return None
+
+
+class TerminalEscalator(InteractiveEscalator):
     """Asks on the terminal. The headed browser window is the live session:
     the operator works in it directly, then answers here."""
 
-    def __init__(self, timeout_s: float = 900) -> None:
-        self.timeout_s = timeout_s
+    def present(self, intervention: Intervention, session: SessionControl) -> None:
+        threading.Thread(target=self._ask, args=(intervention, session), daemon=True).start()
 
-    def escalate(self, intervention: Intervention, session: SessionControl) -> Resolution:
-        session.raise_intervention(intervention)
+    def _ask(self, intervention: Intervention, session: SessionControl) -> None:
         print("\n" + "=" * 70)
         print(f"  INTERVENTION {intervention.id}: {intervention.reason}")
         print(f"  {intervention.message}")
@@ -199,21 +232,24 @@ class TerminalEscalator:
         if intervention.screenshot:
             print(f"  screenshot: {intervention.screenshot}")
         if intervention.cdp_endpoint:
-            print(f"  attach to the live session: {intervention.cdp_endpoint}")
-        print("  You now control the browser window. Do what is needed there.")
+            print(f"  live session (CDP): {intervention.cdp_endpoint}")
+        try:
+            input("  press Enter to take control of the browser window ")
+        except (EOFError, KeyboardInterrupt):
+            session.resolve(Resolution(action="abort", by="terminal-operator"))
+            return
         session.take("terminal-operator")
+        print("  you have control. Work in the browser window, then resolve here.")
         options = "/".join(intervention.options)
         while True:
             try:
-                answer = input(f"  then resolve [{options}]: ").strip().lower()
+                answer = input(f"  resolve [{options}]: ").strip().lower()
             except (EOFError, KeyboardInterrupt):
-                answer = "abort"
+                answer = "abort" if "abort" in intervention.options else "deny"
             if answer in intervention.options:
                 break
-        note = ""
         try:
             note = input("  note for the record (optional): ").strip()
         except (EOFError, KeyboardInterrupt):
-            pass
+            note = ""
         session.resolve(Resolution(action=answer, by="terminal-operator", note=note))  # type: ignore[arg-type]
-        return session.wait(0) or Resolution(action="abort")

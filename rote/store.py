@@ -23,8 +23,22 @@ from .schema import AppProfile, Capability, Overlay, apply_overlay, apply_profil
 LIBRARY = Path(__file__).resolve().parent.parent / "library"
 
 
+# Default values that are pure noise to a reviewer. Pruned by name rather than
+# with exclude_defaults, which would also drop the discriminators (by:, kind:).
+_NOISE = {"negate": False, "exact": True, "expect": [], "note": "", "description": "",
+          "timeout_ms": 10_000, "required": True, "human_steps": 0}
+
+
+def _prune(value):
+    if isinstance(value, dict):
+        return {k: _prune(v) for k, v in value.items() if not (k in _NOISE and v == _NOISE[k])}
+    if isinstance(value, list):
+        return [_prune(v) for v in value]
+    return value
+
+
 def _dump(model) -> str:
-    data = model.model_dump(mode="json", exclude_none=True, exclude_defaults=False)
+    data = _prune(model.model_dump(mode="json", exclude_none=True))
     return yaml.safe_dump(data, sort_keys=False, allow_unicode=True, width=100)
 
 

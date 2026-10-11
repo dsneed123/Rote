@@ -52,3 +52,10 @@ def test_human_steps_are_flagged():
     cap, notes = compile_capability(rec, "corelink.x.y", PROFILE, Redactor())
     assert cap.provenance.human_steps == 1 and "operator" in cap.steps[0].note
     assert any("human" in n for n in notes)
+
+
+def test_notes_are_templated_and_redacted():
+    rec = recording(steps=[RecordedStep(Action.fill, FIELD, value="12345",
+                                        note="member 12345 has a balance of $1,234.56")])
+    cap, _ = compile_capability(rec, "corelink.x.y", PROFILE, Redactor())
+    assert cap.steps[0].note == "member {{inputs.member_id}} has a balance of <amount>"

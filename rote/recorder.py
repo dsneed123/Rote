@@ -118,7 +118,11 @@ def compile_capability(recording: Recording, name: str, profile: AppProfile, red
         if recorded.screen_after:
             expect.append(TextCheck(text=templatize(recorded.screen_after, params),
                                     frame=recorded.screen_frame))
-        note = recorded.note
+        # Notes are the model's prose: useful to a reviewer, but they quote the
+        # screen ("balance is $1,234.56"). Template the parameters, redact the rest.
+        note = redactor.text(templatize(recorded.note, params))
+        if len(note) > 160:
+            note = note[:157].rsplit(" ", 1)[0] + "..."
         if recorded.by_human:
             note = f"performed by an operator during discovery; verify on first replay. {note}".strip()
             notes.append(f"step {len(steps) + 1} was done by a human; its locator is unverified")
