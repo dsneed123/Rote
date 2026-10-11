@@ -1,12 +1,29 @@
 """Rote — Record Once Then Execute.
 
-Entry point. Inference runs on the GX10; `ai` below is the ready-to-use client
-(see ai.py for the full API: ask, stream, look, conversation, with_tools, embed).
+Entry point. Type a goal; Rote replays a saved workflow if it has one, and
+otherwise plans the steps with the model, runs them, and records what worked so
+the next time is a replay.
+
+Inference runs on the GX10 (see ai.py). The layers underneath are in src/:
+bridge orchestrates, analyze plans, controller executes, workflows records.
 """
 
 import sys
 
 from ai import AI, AIError
+from src import controller as controllers
+from src import workflows
+from src.bridge import Bridge, Outcome
+
+HELP = """\
+  <goal>            do it — replays a saved workflow, or plans a new one
+  /ask <question>   just ask the model, no actions taken
+  /workflows        list what has been recorded
+  /forget <name>    delete a recorded workflow
+  /controllers      show which controllers work on this machine
+  /help             this
+  /exit             quit\
+"""
 
 
 def setup_ai() -> AI:
@@ -32,6 +49,47 @@ def setup_ai() -> AI:
     return ai
 
 
+def report(outcome: Outcome) -> None:
+    """Print what happened, step by step. Notes were already shown live."""
+    if outcome.error:
+        print(f"  {outcome.summary()}")
+        return
+
+    for result in outcome.results:
+        mark = "ok  " if result.ok else "FAIL"
+        print(f"  [{mark}] {result.step}")
+        for line in str(result.output).splitlines():
+            print(f"         {line}")
+
+    print(f"  {outcome.summary()}")
+
+
+def handle_goal(bridge: Bridge, goal: str, max_corrections: int = 3) -> None:
+    """Run a goal, and on failure offer the human-intervention path.
+
+    Capped: if the model cannot get there in a few tries it is not going to,
+    and each attempt costs a model call and the operator's attention.
+    """
+    outcome = bridge.handle(goal)
+    report(outcome)
+
+    for attempt in range(max_corrections):
+        if outcome.ok:
+            return
+        try:
+            correction = input("\n  what should it have done? (blank to give up) ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return
+        if not correction:
+            return
+        outcome = bridge.correct(outcome, correction)
+        report(outcome)
+
+    if not outcome.ok:
+        print(f"  giving up after {max_corrections} correction(s)")
+
+
 def main() -> int:
     try:
         ai = setup_ai()
@@ -39,46 +97,79 @@ def main() -> int:
         print(f"error: {e}", file=sys.stderr)
         return 1
 
-    # One conversation, reused every turn — this is what remembers the history.
-    # (ai.ask() is the stateless version: it keeps nothing between calls.)
-    chat = ai.conversation()
+    bridge = Bridge(ai=ai, notify=lambda message: print(f"  · {message}"))
+    saved = workflows.all_workflows(bridge.workflow_dir)
 
-    print(f"{ai.model} ready on {ai.host}")
-    print("Ctrl-D or /exit to quit, /history to review, /reset to clear.\n")
+    print(f"Rote — {ai.model} on {ai.host}")
+    print(f"{len(saved)} recorded workflow(s); controllers: {', '.join(bridge.controllers)}")
+    print("/help for commands, /exit to quit.\n")
 
     while True:
         try:
-            prompt = input("prompt> ").strip()
+            line = input("rote> ").strip()
         except (EOFError, KeyboardInterrupt):
             print()
-            return 0
+            break
 
-        if not prompt:
-            continue
-        if prompt in ("/exit", "/quit"):
-            return 0
-        if prompt == "/reset":
-            chat.reset()
-            print("(history cleared)\n")
-            continue
-        if prompt == "/history":
-            for message in chat.messages:
-                print(f"  {message['role']:>9}: {message['content']}")
-            print()
+        if not line:
             continue
 
-        try:
-            # stream_say prints as the model generates, and appends both the
-            # prompt and the reply to chat.messages.
-            for piece in chat.stream_say(prompt):
-                print(piece, end="", flush=True)
-            print("\n")
-        except AIError as e:
-            print(f"error: {e}\n", file=sys.stderr)
+        command, _, argument = line.partition(" ")
+        argument = argument.strip()
 
-    # Other things `ai` can do, for when Rote grows past a prompt loop:
-    #   ai.look("screenshot.png", "What's on screen?")   # vision
-    #   ai.with_tools("...", tools=[my_function])        # model calls your code
+        if command in ("/exit", "/quit"):
+            break
+
+        elif command == "/help":
+            print(HELP)
+
+        elif command == "/ask":
+            if not argument:
+                print("  usage: /ask <question>")
+                continue
+            try:
+                for piece in ai.stream(argument):
+                    print(piece, end="", flush=True)
+                print()
+            except AIError as e:
+                print(f"  error: {e}", file=sys.stderr)
+
+        elif command == "/workflows":
+            found = workflows.all_workflows(bridge.workflow_dir)
+            if not found:
+                print("  nothing recorded yet")
+            for workflow in found:
+                print(f"  {workflow.goal}")
+                print(f"    {len(workflow.plan)} step(s) via {workflow.plan.controller}, "
+                      f"replayed {workflow.runs}x  [{workflow.path.name}]")
+
+        elif command == "/forget":
+            if not argument:
+                print("  usage: /forget <name or goal>")
+                continue
+            target = workflows.find(argument, bridge.workflow_dir)
+            if not target or not target.path:
+                print(f"  no workflow matching {argument!r}")
+                continue
+            target.path.unlink()
+            print(f"  forgot {target.path.name}")
+
+        elif command == "/controllers":
+            for name, ok, reason in controllers.status():
+                print(f"  {'ok ' if ok else '-- '} {name}")
+                if reason:
+                    for detail in reason.splitlines():
+                        print(f"        {detail}")
+
+        elif command.startswith("/"):
+            print(f"  unknown command {command}. /help for the list.")
+
+        else:
+            handle_goal(bridge, line)
+
+    for controller in bridge.controllers.values():
+        controller.close()
+    return 0
 
 
 if __name__ == "__main__":

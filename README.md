@@ -1,14 +1,54 @@
 # Rote
 Record Once Then Execute
 
+## Running it
+
+    python main.py
+
+Type a goal. Rote replays a recorded workflow if it has one, otherwise the
+model plans the steps, you confirm anything that changes state, and a plan that
+works is recorded — so the next time is a replay with no model call.
+
+    rote> count the python files in src and write it to count.txt
+      · planning with the shell controller
+      run run(command="find src -name '*.py' | wc -l > count.txt")?
+      [y/N] y
+      [ok] ...
+      planned 1 step(s); all ok; recorded to count-the-python-files-....yaml
+
+Commands: `/workflows`, `/forget <name>`, `/controllers`, `/ask <question>`,
+`/help`, `/exit`.
+
+### Layers
+
+| File | Role |
+| --- | --- |
+| `main.py` | entry point and prompt loop |
+| `src/bridge.py` | replay-or-plan orchestration, human correction |
+| `src/analyze.py` | screenshot + goal → validated plan |
+| `src/controller.py` | executes steps; shell / desktop / browser |
+| `src/plan.py` | the `{tool, args, why}` contract |
+| `src/workflows.py` | YAML recordings in `src/workflows/` |
+
+### Controllers
+
+`/controllers` shows which work here. **shell** works out of the box. The other
+two need setup:
+
+    sudo apt install ydotool && sudo systemctl enable --now ydotoold   # desktop
+    pip install playwright && playwright install chromium              # browser
+
+Desktop input uses ydotool rather than xdotool because this is a Wayland
+session, where X11 tools cannot inject into other applications. Screenshots
+also need a backend (`sudo apt install gnome-screenshot`); without one, Rote
+still plans, just without seeing the screen.
+
 ## AI backend
 
 Inference runs on the ASUS GX10, which hosts Ollama. `ai.py` is the client
-library; `main.py` is the entry point and owns startup — it connects, fails
-loudly if the GX10 is unreachable or the model is missing, and warms the model
-so the first request doesn't pay the ~30s load cost.
-
-    python main.py
+library; `main.py` owns startup — it connects, fails loudly if the GX10 is
+unreachable or the model is missing, and warms the model so the first request
+doesn't pay the ~30s load cost.
 
 The GX10 is reached over Tailscale, so this works from anywhere both machines
 are on the tailnet — no port forwarding, no VPN config.
