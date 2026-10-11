@@ -1,8 +1,7 @@
-"""
-Analyze the screenshot and prompt to determine a course of action.
-This should return a list of tool call instructions, which will be executed by the controller layer.
- The instructions should be in the form of a list of dictionaries, where each dictionary
- contains the following keys:
+"""Turn a goal and a screenshot into a Plan of tool calls for one controller.
+
+The model is shown the chosen controller's tools and asked for an ordered list
+of steps, each one a dict with:
 
     tool  the name of a tool the chosen controller exposes  (str, required)
     args  keyword arguments for that tool                   (dict, required)
@@ -90,7 +89,7 @@ def capture_screen(path: str | Path | None = None) -> Path:
         image.save(target)
         return target
     except Exception:
-        pass
+        pass   # fall through to the error below, which lists the backends to install
 
     raise RuntimeError(
         "no working screenshot backend. On Wayland install one of:\n"

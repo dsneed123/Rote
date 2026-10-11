@@ -1,3 +1,6 @@
+"""Guardrails: the URL allowlist, risk levels that need a human or approval,
+and redaction of sensitive values before anything is logged."""
+
 import pytest
 
 from rote.policy import Guard, NeedsHuman, Policy, PolicyViolation, Redactor

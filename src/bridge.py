@@ -1,18 +1,11 @@
-#This layer sits in between main.py and the controller layer. It handles
-# the logic of deciding which controller to use, and provides a unified interface
-# for the rest of the codebase.
+"""The orchestration layer between main.py and the controllers.
 
-#read screenshot and determine what controller to use based on the content of the screenshot
-
-#use DAG to determine if theres a set of saved steps to solve the problem, if so use them
-
-#If not, use the ai to create an attempt at a solution, and then use the controller to execute it
-
-#if fail use human intervention to correct the solution and save it for future use
-
-# Pick avaiable tools and pass them to the controller layer
-
-"""The orchestration layer. `Bridge.handle(goal)` is the whole loop."""
+`Bridge.handle(goal)` is the whole loop: replay a saved workflow if one matches
+the goal; otherwise take a screenshot, ask the model which controller fits,
+have analyze.py plan the steps, run them, and record the plan if every step
+succeeded. When a run fails, `Bridge.correct()` re-plans with the operator's
+clarification, so the same goal does not fail the same way twice.
+"""
 
 from __future__ import annotations
 

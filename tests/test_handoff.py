@@ -1,3 +1,6 @@
+"""Handoff: one owner per live session, and control moving between automation
+and the operator through the console's HTTP endpoints."""
+
 import threading
 import time
 

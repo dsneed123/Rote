@@ -7,6 +7,7 @@ same goal can be replayed later without asking the model to plan it again.
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -73,13 +74,14 @@ def load(path: Path) -> Workflow:
 
 
 def all_workflows(directory: Path = WORKFLOW_DIR) -> list[Workflow]:
-    """Every saved workflow. Unreadable or empty files are skipped, not fatal."""
+    """Every saved workflow. Unreadable or empty files are skipped, not fatal,
+    but each one is reported so a broken recording does not vanish unnoticed."""
     found = []
     for path in sorted(directory.glob("*.yaml")):
         try:
             found.append(load(path))
-        except (ValueError, yaml.YAMLError):
-            continue
+        except (ValueError, yaml.YAMLError) as e:
+            print(f"warning: skipping workflow {path.name}: {e}", file=sys.stderr)
     return found
 
 

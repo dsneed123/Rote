@@ -1,5 +1,3 @@
-#This layer handles logic and tool calling from the ai
-
 """Controllers expose a set of tools and execute plan steps against them.
 
 Each controller declares what it can operate on and which tools it offers.
@@ -332,7 +330,7 @@ class BrowserController(Controller):
             try:
                 resource.close() if resource is self._browser else resource.stop()
             except Exception:
-                pass
+                pass   # best-effort teardown; the browser may already be gone
         self._playwright = self._browser = self._page = None
 
     def tools(self) -> list[Callable]:
@@ -368,7 +366,7 @@ class BrowserController(Controller):
                 locate().fill(value)
                 return f"filled {label!r}"
             except Exception:
-                continue
+                continue   # try the next way of finding the field; the raise below covers all failing
         raise RuntimeError(f"no field matching {label!r}")
 
     def read_page(self, selector: str = "body") -> str:

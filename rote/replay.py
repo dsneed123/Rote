@@ -88,7 +88,7 @@ def detect(surface: Surface, detectors: list[Detector]) -> Detected | None:
                     message = (match.group(1) if match and match.groups() else match.group(0) if match else "")
                 return Detected(detector, " ".join(message.split()) or detector.description)
         except Exception:
-            continue
+            continue   # a check that cannot be evaluated (frame mid-navigation) means "not this condition"
     return None
 
 

@@ -66,15 +66,16 @@ class TestFind:
 
 class TestRobustness:
     def test_empty_file_is_skipped_not_fatal(self, simple_plan, wf_dir):
-        # src/workflows/test.yaml is empty in the repo; it must not break startup.
+        # An empty recording (e.g. an interrupted save) must not break startup.
         (wf_dir / "empty.yaml").write_text("")
         workflows.save(simple_plan, "real one", wf_dir)
         assert len(workflows.all_workflows(wf_dir)) == 1
 
-    def test_malformed_yaml_is_skipped(self, simple_plan, wf_dir):
+    def test_malformed_yaml_is_skipped(self, simple_plan, wf_dir, capsys):
         (wf_dir / "broken.yaml").write_text("{{{ not yaml")
         workflows.save(simple_plan, "real one", wf_dir)
         assert len(workflows.all_workflows(wf_dir)) == 1
+        assert "skipping workflow broken.yaml" in capsys.readouterr().err
 
     def test_yaml_missing_steps_is_skipped(self, wf_dir):
         (wf_dir / "partial.yaml").write_text("goal: no steps here\n")

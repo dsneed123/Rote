@@ -382,7 +382,7 @@ class WebSurface:
             try:
                 closer()
             except Exception:
-                pass
+                pass   # best-effort teardown; one half-dead resource must not stop the rest closing
         self._pw = self._browser = self._context = self._page = None
 
     @property
@@ -468,7 +468,7 @@ class WebSurface:
             try:
                 frame.wait_for_load_state("load", timeout=timeout_ms)
             except Exception:
-                pass
+                pass   # a frame that detached or never finished loading; the checks after this report it
         self._raise_if_blocked()
 
     def _raise_if_blocked(self) -> None:
@@ -642,7 +642,7 @@ class WebSurface:
             try:
                 found = frame.evaluate(_JS_ENUMERATE, next_id)
             except Exception:
-                continue
+                continue   # frame navigating mid-query; the next observation will see it settled
             body = self._body_text(frame) or ""
             for item in found:
                 elements.append(Element(frame=label, **item))
@@ -716,7 +716,7 @@ class WebSurface:
             try:
                 ids = frame.evaluate(_JS_FIND_VALUE, [value, start, contains])
             except Exception:
-                continue
+                continue   # frame navigating mid-query; its value is not on screen yet
             hits += ids
             start += len(ids) + 1
         return hits
@@ -773,7 +773,7 @@ class WebSurface:
             try:
                 pairs = frame.evaluate(_JS_HARVEST, self.sensitive_labels)
             except Exception:
-                continue
+                continue   # frame navigating; screenshots and snapshots harvest again before writing
             for label, value in pairs:
                 self.redactor.know(value, f"pii:{label.replace(' ', '_')}")
 
@@ -802,6 +802,6 @@ class WebSurface:
             try:
                 snap = frame.locator("body").aria_snapshot(timeout=2_000)
             except Exception:
-                continue
+                continue   # frame gone mid-snapshot; the other frames are still worth keeping
             parts.append(f"# frame {self._frame_label(frame)} {urlparse(frame.url).path}\n{snap}")
         return self.redactor.text("\n\n".join(parts))

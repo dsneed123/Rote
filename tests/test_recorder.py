@@ -1,3 +1,7 @@
+"""Compiling a discovery recording into a capability: typed parameter values
+become templates, and a recording with PII in a checkpoint or no success
+checkpoint is rejected."""
+
 import pytest
 
 from rote.policy import Redactor

@@ -1,3 +1,6 @@
+"""The capability artifact: strict validation, approval bound to content,
+tenant overlays, the agent-facing tool schema, and value coercion."""
+
 from pathlib import Path
 
 import pytest
