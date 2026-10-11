@@ -1,0 +1,56 @@
+schema_version: rote.capability/v1
+name: corelink.member.read_savings_balance
+version: 1.0.0
+title: Read a member's primary savings balance
+app: {product: corelink-teller, versions: "7.4", entry: /main}
+side_effects: none
+inputs:
+  member_id: {type: string, pattern: "\\d{4,9}", description: Member number, example: "12345"}
+outputs:
+  savings_balance: {type: money, description: Balance of the PRIMARY SAVINGS share}
+outcomes:
+  - {code: member_not_found}
+  - {code: invalid_member_number}
+  - {code: access_restricted}
+steps:
+  - id: open_member_inquiry
+    action: click
+    target:
+      description: Member Inquiry in the left menu
+      frame: {name: nav}
+      strategies:
+        - {by: role, role: link, name: Member Inquiry}
+        - {by: text, text: Member Inquiry}
+    expect:
+      - {kind: text, text: MEMBER INQUIRY, frame: {name: main}}
+  - id: enter_member_number
+    action: fill
+    risk: input
+    value: "{{inputs.member_id}}"
+    target:
+      description: Member number field
+      frame: {name: main}
+      strategies:
+        - {by: label_near, label: "Member Number:", role: textbox}
+        - {by: css, css: "input[name=f_0012]"}
+  - id: submit_inquiry
+    action: click
+    risk: submit
+    target:
+      description: Inquire button
+      frame: {name: main}
+      strategies:
+        - {by: role, role: button, name: Inquire}
+    expect:
+      - {kind: text, text: MEMBER INQUIRY - DETAIL, frame: {name: main}}
+  - id: read_savings_balance
+    action: extract
+    output: savings_balance
+    target:
+      description: Balance of the PRIMARY SAVINGS row
+      frame: {name: main}
+      strategies:
+        - {by: table_cell, row_column: Description, row_value: PRIMARY SAVINGS, column: Balance}
+success:
+  - {kind: text, text: MEMBER INQUIRY - DETAIL, frame: {name: main}}
+  - {kind: text, text: "{{inputs.member_id}}", frame: {name: main}}

@@ -1,0 +1,117 @@
+# CoreLink Teller — vendor product profile.
+#
+# Shared by every capability on this product and every tenant that runs it.
+# Detectors classify the runtime conditions the product can raise on any
+# screen, so individual capabilities don't each rediscover "session expired".
+# Order matters: the first detector whose checks all hold wins.
+product: corelink-teller
+description: Core banking teller workstation (fictional vendor), frameset UI.
+
+# Signing on is product knowledge, not part of any one flow. Credentials are
+# secret references resolved from the environment at run time
+# (ROTE_SECRET_CORELINK_USER / ROTE_SECRET_CORELINK_PASSWORD); they never
+# appear in an artifact, a log or a model prompt.
+sign_on:
+  - id: open_sign_on
+    action: navigate
+    value: /login
+    expect:
+      - {kind: text, text: SIGN ON}
+  - id: enter_operator_id
+    action: fill
+    risk: input
+    value: "{{secrets.corelink_user}}"
+    target:
+      description: Operator ID field
+      strategies:
+        - {by: label_near, label: Operator ID, role: textbox}
+        - {by: css, css: "input[name=f_0001]"}
+  - id: enter_password
+    action: fill
+    risk: input
+    value: "{{secrets.corelink_password}}"
+    target:
+      description: Password field
+      strategies:
+        - {by: label_near, label: Password, role: textbox}
+        - {by: css, css: "input[type=password]"}
+  - id: submit_sign_on
+    action: click
+    risk: submit
+    target:
+      description: Sign On button
+      strategies:
+        - {by: role, role: button, name: Sign On}
+    expect:
+      - {kind: url, path_regex: "^/main$"}
+
+signed_in:
+  - {kind: url, path_regex: "^/main$"}
+
+detectors:
+  # --- recoverable: known interruptions with a known remedy ---
+  - code: session_expired
+    disposition: recoverable
+    description: The host ended the session; sign on again and restart the flow.
+    when:
+      - {kind: regex, pattern: "SESSION EXPIRED|CL-0401"}
+    recover: {kind: reauthenticate, max_attempts: 1}
+  - code: signed_out
+    disposition: recoverable
+    description: Landed on the sign-on screen (never signed in, or bounced out).
+    when:
+      - {kind: text, text: CORELINK TELLER SIGN ON}
+      - {kind: url, path_regex: "^/login$"}
+    recover: {kind: reauthenticate, max_attempts: 1}
+  - code: system_notice
+    disposition: recoverable
+    description: Broadcast notice interstitial; acknowledge it and carry on.
+    when:
+      - {kind: text, text: SYSTEM NOTICE}
+    recover:
+      kind: click
+      max_attempts: 2
+      target:
+        description: Acknowledge button on the notice
+        strategies:
+          - {by: role, role: button, name: Acknowledge}
+
+  # --- business outcomes: legitimate answers the caller needs ---
+  - code: member_not_found
+    disposition: business
+    description: No member with that number.
+    when:
+      - {kind: regex, pattern: "NO RECORD FOUND|CL-0204"}
+    message_regex: "(NO RECORD FOUND[^(]*)"
+  - code: invalid_member_number
+    disposition: business
+    description: The host rejected the member number format.
+    when:
+      - {kind: regex, pattern: "INVALID MEMBER NUMBER|CL-0210"}
+    message_regex: "(INVALID MEMBER NUMBER[^(]*)"
+  - code: access_restricted
+    disposition: business
+    description: Restricted account; needs a supervisor override this operator lacks.
+    when:
+      - {kind: regex, pattern: "ACCESS DENIED|CL-0403"}
+    message_regex: "(ACCESS DENIED[^(]*)"
+  - code: validation_error
+    disposition: business
+    description: The host rejected a field value (minimum deposit, required field).
+    when:
+      - {kind: regex, pattern: "CL-031[0-9]"}
+    message_regex: "([A-Z][A-Z ,.$0-9]+) \\(CL-031"
+
+  # --- failures: stop and surface ---
+  - code: host_error
+    disposition: failure
+    retryable: true
+    description: The core host aborted the transaction.
+    when:
+      - {kind: regex, pattern: "SYSTEM ERROR|HOST TRANSACTION ABORTED"}
+    message_regex: "(SYSTEM ERROR[^.]*)"
+  - code: posting_rejected
+    disposition: failure
+    description: The host refused to post.
+    when:
+      - {kind: regex, pattern: "CL-0500"}
