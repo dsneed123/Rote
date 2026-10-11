@@ -1,0 +1,263 @@
+schema_version: rote.capability/v1
+name: corelink.share.open_savings_club
+version: 1.0.0
+title: Open a savings club share for a member
+description: 'Recorded from the goal: Open a new savings club share for member 12345 with nickname VACATION
+  and an opening deposit of 25.00, post it, and read the confirmation number'
+app:
+  product: corelink-teller
+  versions: '*'
+  surface: web
+  entry: /main
+side_effects: irreversible
+inputs:
+  member_id:
+    type: string
+    pattern: \d{4,9}
+    sensitivity: internal
+    example: '12345'
+  nickname:
+    type: string
+    sensitivity: internal
+    example: VACATION
+  deposit:
+    type: money
+    sensitivity: internal
+    example: '25.00'
+outputs:
+  confirmation_number:
+    type: integer
+    description: 'read during discovery for: confirmation_number'
+    sensitivity: pii
+    pattern: OPENED\.\s+CONFIRMATION\s*(\d+)
+outcomes:
+- code: member_not_found
+  description: No member with that number.
+- code: invalid_member_number
+  description: The host rejected the member number format.
+- code: access_restricted
+  description: Restricted account; needs a supervisor override this operator lacks.
+- code: validation_error
+  description: The host rejected a field value (minimum deposit, required field).
+steps:
+- id: open_member_inquiry
+  action: click
+  target:
+    description: link 'Member Inquiry'
+    frame:
+      name: nav
+    strategies:
+    - by: role
+      role: link
+      name: Member Inquiry
+    - by: text
+      text: Member Inquiry
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(1) > td > a
+  risk: read
+  expect:
+  - kind: text
+    text: MEMBER INQUIRY
+    frame:
+      name: main
+  note: Clicking 'Member Inquiry' will likely take me to a screen where I can search for the member by
+    ID ({{inputs.member_id}}) and then proceed to create a new...
+- id: enter_member_number
+  action: fill
+  target:
+    description: textbox 'Member Number:'
+    frame:
+      name: main
+    strategies:
+    - by: label_near
+      label: 'Member Number:'
+      role: textbox
+    - by: css
+      css: input[name="f_0012"]
+  value: '{{inputs.member_id}}'
+  risk: input
+  note: I'm on the Member Inquiry screen and need to enter member ID {{inputs.member_id}} as the first
+    step toward opening a new savings club share for this member.
+- id: submit_member_inquiry
+  action: click
+  target:
+    description: button 'Inquire'
+    frame:
+      name: main
+    strategies:
+    - by: role
+      role: button
+      name: Inquire
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > form > table > tbody > tr:nth-of-type(2)
+        > td:nth-of-type(2) > input
+  risk: submit
+  expect:
+  - kind: text
+    text: MEMBER INQUIRY - DETAIL
+    frame:
+      name: main
+  note: I've entered the member number {{inputs.member_id}}, so now I need to submit it by clicking the
+    Inquire button to see the member's information before...
+- id: open_new_share
+  action: click
+  target:
+    description: link 'Open Share'
+    frame:
+      name: main
+    strategies:
+    - by: role
+      role: link
+      name: Open Share
+    - by: text
+      text: Open Share
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > a:nth-of-type(1)
+  risk: read
+  expect:
+  - kind: text
+    text: SHARE MAINTENANCE - OPEN SHARE
+    frame:
+      name: main
+  note: I need to open a new savings club share for member {{inputs.member_id}}. The current screen shows
+    the member inquiry details, and I can see an 'Open Share'...
+- id: select_share_type
+  action: click
+  target:
+    description: combobox 'Share Type'
+    frame:
+      name: main
+    strategies:
+    - by: label_near
+      label: Share Type
+      role: combobox
+    - by: css
+      css: select[name="f_0031"]
+  risk: read
+  expect:
+  - kind: text
+    text: SHARE MAINTENANCE - OPEN SHARE
+    frame:
+      name: main
+  note: I need to select 'SAVINGS CLUB' from the Share Type dropdown as part of opening a new savings
+    club share. The combobox for Share Type is at element [4].
+- id: select_savings_club
+  action: select
+  target:
+    description: combobox 'Share Type'
+    frame:
+      name: main
+    strategies:
+    - by: label_near
+      label: Share Type
+      role: combobox
+    - by: css
+      css: select[name="f_0031"]
+  value: SAVINGS CLUB
+  risk: input
+  note: I've opened the Share Type dropdown and now need to select 'SAVINGS CLUB' as specified in the
+    goal.
+- id: enter_nickname
+  action: fill
+  target:
+    description: textbox 'Nickname'
+    frame:
+      name: main
+    strategies:
+    - by: label_near
+      label: Nickname
+      role: textbox
+    - by: css
+      css: input[name="f_0032"]
+  value: '{{inputs.nickname}}'
+  risk: input
+  note: Need to enter the nickname '{{inputs.nickname}}' in the Nickname field before proceeding to deposit
+    amount and continuing.
+- id: enter_opening_deposit
+  action: fill
+  target:
+    description: textbox 'Opening Deposit'
+    frame:
+      name: main
+    strategies:
+    - by: label_near
+      label: Opening Deposit
+      role: textbox
+    - by: css
+      css: input[name="f_0033"]
+  value: '{{inputs.deposit}}'
+  risk: input
+  note: I need to enter the opening deposit amount of ${{inputs.deposit}} into the Opening Deposit field
+    before clicking Continue.
+- id: click_continue
+  action: click
+  target:
+    description: button 'Continue'
+    frame:
+      name: main
+    strategies:
+    - by: role
+      role: button
+      name: Continue
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > form > table > tbody > tr:nth-of-type(5)
+        > td:nth-of-type(2) > input
+  risk: submit
+  expect:
+  - kind: text
+    text: SHARE MAINTENANCE - REVIEW
+    frame:
+      name: main
+  note: 'All required fields have been filled correctly (member ID: {{inputs.member_id}}, nickname: {{inputs.nickname}},
+    deposit: {{inputs.deposit}}). The next...'
+- id: post_new_share
+  action: click
+  target:
+    description: button 'Post'
+    frame:
+      name: main
+    strategies:
+    - by: role
+      role: button
+      name: Post
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > form > input:nth-of-type(5)
+  risk: commit
+  expect:
+  - kind: text
+    text: SHARE MAINTENANCE - CONFIRMATION
+    frame:
+      name: main
+  note: We've entered all required information correctly, so we need to post this transaction to open
+    the share account.
+- id: read_confirmation_number
+  action: extract
+  target:
+    description: value for confirmation_number
+    frame:
+      name: main
+    strategies:
+    - by: text
+      text: OPENED. CONFIRMATION
+      exact: false
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > table > tbody > tr > td > font > b
+  output: confirmation_number
+  risk: read
+  note: We've successfully opened the share and posted it, now need to capture the confirmation number.
+success:
+- kind: text
+  text: SHARE MAINTENANCE - CONFIRMATION
+  frame:
+    name: main
+approval:
+  status: approved
+  by: demo-reviewer
+  at: '2026-10-11T02:54:09+00:00'
+  fingerprint: 06229c484abfbfa7
+provenance:
+  run_id: 20261011T025202Z-discovery-a817bf
+  model: qwen3-vl:30b
+  recorded_at: '2026-10-11T02:53:18+00:00'
+  goal: Open a new savings club share for member 12345 with nickname VACATION and an opening deposit of
+    25.00, post it, and read the confirmation number

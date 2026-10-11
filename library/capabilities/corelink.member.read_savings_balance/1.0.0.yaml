@@ -1,0 +1,132 @@
+schema_version: rote.capability/v1
+name: corelink.member.read_savings_balance
+version: 1.0.0
+title: Read a member's primary savings balance
+description: 'Recorded from the goal: Look up member 12345 and read their current primary savings balance'
+app:
+  product: corelink-teller
+  versions: '*'
+  surface: web
+  entry: /main
+side_effects: none
+inputs:
+  member_id:
+    type: string
+    pattern: \d{4,9}
+    sensitivity: internal
+    example: '12345'
+outputs:
+  primary_savings_balance:
+    type: money
+    description: 'read during discovery for: primary_savings_balance'
+    sensitivity: pii
+outcomes:
+- code: member_not_found
+  description: No member with that number.
+- code: invalid_member_number
+  description: The host rejected the member number format.
+- code: access_restricted
+  description: Restricted account; needs a supervisor override this operator lacks.
+- code: validation_error
+  description: The host rejected a field value (minimum deposit, required field).
+steps:
+- id: navigate_to_member_inquiry
+  action: click
+  target:
+    description: link 'Member Inquiry'
+    frame:
+      name: nav
+    strategies:
+    - by: role
+      role: link
+      name: Member Inquiry
+    - by: text
+      text: Member Inquiry
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(1) > td > a
+  risk: read
+  expect:
+  - kind: text
+    text: MEMBER INQUIRY
+    frame:
+      name: main
+  note: Clicking 'Member Inquiry' will take me to a screen where I can enter member ID {{inputs.member_id}}
+    and look up their account information, including primary...
+- id: enter_member_number
+  action: fill
+  target:
+    description: textbox 'Member Number:'
+    frame:
+      name: main
+    strategies:
+    - by: label_near
+      label: 'Member Number:'
+      role: textbox
+    - by: css
+      css: input[name="f_0012"]
+  value: '{{inputs.member_id}}'
+  risk: input
+  note: I'm at the Member Inquiry screen where I need to enter the member ID {{inputs.member_id}}. The
+    textbox is ready for input, so my first action should be to...
+- id: submit_member_inquiry
+  action: click
+  target:
+    description: button 'Inquire'
+    frame:
+      name: main
+    strategies:
+    - by: role
+      role: button
+      name: Inquire
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > form > table > tbody > tr:nth-of-type(2)
+        > td:nth-of-type(2) > input
+  risk: submit
+  expect:
+  - kind: text
+    text: MEMBER INQUIRY - DETAIL
+    frame:
+      name: main
+  note: I've entered the member number {{inputs.member_id}} in the Member Number field. Now I need to
+    submit the inquiry by clicking the Inquire button to view the...
+- id: read_primary_savings_balance
+  action: extract
+  target:
+    description: value for primary_savings_balance
+    frame:
+      name: main
+    strategies:
+    - by: table_cell
+      row_column: Description
+      row_value: PRIMARY SAVINGS
+      column: Balance
+    - by: table_cell
+      row_column: Type
+      row_value: SAVINGS
+      column: Balance
+    - by: label_near
+      label: PRIMARY SAVINGS
+      role: cell
+    - by: css
+      css: body > font > table > tbody > tr:nth-of-type(2) > td > table:nth-of-type(2) > tbody > tr:nth-of-type(2)
+        > td:nth-of-type(4)
+  output: primary_savings_balance
+  risk: read
+  note: We've successfully found member {{inputs.member_id}}'s details and can see their primary savings
+    balance is <pii:primary_savings_balance> in the table.
+success:
+- kind: text
+  text: MEMBER INQUIRY - DETAIL
+  frame:
+    name: main
+- kind: text
+  text: '{{inputs.member_id}}'
+  frame:
+    name: main
+approval:
+  status: draft
+provenance:
+  run_id: 20261011T023321Z-discovery-3c83bb
+  model: qwen3-vl:30b
+  recorded_at: '2026-10-11T02:33:51+00:00'
+  goal: Look up member 12345 and read their current primary savings balance

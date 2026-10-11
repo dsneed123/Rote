@@ -1,0 +1,29 @@
+# Lakeshore Credit Union runs the same CoreLink Teller product, configured
+# differently: the member field is labelled "Acct Holder No.:", the button is
+# "Search", and the balance column is "Avail Bal" (columns also reordered,
+# which table_cell locating by header already absorbs).
+#
+# Only the differences are here, addressed by step id. Everything else —
+# the flow, checkpoints, outputs, business outcomes — is inherited from the
+# base capability, and from the shared corelink-teller app profile.
+tenant: lakeshore
+applies_to: corelink.member.read_savings_balance
+base_versions: "1.x"
+note: Written from the tenant-b replay failure (evidence/replay-10); three steps patched.
+steps:
+  enter_member_number:
+    target:
+      description: textbox 'Acct Holder No.:'
+      strategies:
+        - {by: label_near, label: "Acct Holder No.:", role: textbox}
+        - {by: css, css: "input[name=\"f_0012\"]"}
+  submit_member_inquiry:
+    target:
+      description: button 'Search'
+      strategies:
+        - {by: role, role: button, name: Search}
+  read_primary_savings_balance:
+    target:
+      strategies:
+        - {by: table_cell, row_column: Description, row_value: PRIMARY SAVINGS, column: Avail Bal}
+        - {by: table_cell, row_column: Share, row_value: S00, column: Avail Bal}
