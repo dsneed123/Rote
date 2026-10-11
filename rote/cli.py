@@ -74,6 +74,7 @@ class Session:
                                   cdp_port=args.cdp_port if args.operator != "none" else None,
                                   secrets=secrets_source(args.base_url),
                                   on_human_event=self.control.record_human_event)
+        self.surface.sensitive_labels = self.profile.sensitive_labels
         self.console = None
         self.args = args
 
@@ -167,9 +168,10 @@ def _faults(base_url: str, spec: list[str] | None):
         what, _, at = item.partition("@")
         name, _, arg = what.partition("=")
         fault = {"notice": {"notice_once": True}, "error": {"error_once": True},
-                 "expire": {"expire_session": True}, "slow": {"slow_ms": int(arg or 1500)}}.get(name)
+                 "expire": {"expire_session": True}, "slow": {"slow_ms": int(arg or 1500)},
+                 "unknown_dialog": {"password_prompt_once": True}}.get(name)
         if fault is None:
-            raise SystemExit(f"unknown fault {name!r}; use notice, error, expire or slow=MS")
+            raise SystemExit(f"unknown fault {name!r}; use notice, error, expire, unknown_dialog or slow=MS")
         plan.append((at or None, fault))
     if not plan:
         return None
@@ -308,7 +310,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("capability")
     p.add_argument("--version")
     p.add_argument("--input", action="append", help="NAME=VALUE")
-    p.add_argument("--inject", action="append", help="notice|error|expire|slow=MS[@step_id]")
+    p.add_argument("--inject", action="append", help="notice|error|expire|unknown_dialog|slow=MS[@step_id]")
     p.set_defaults(fn=cmd_replay)
 
     p = sub.add_parser("show", help="review a capability")

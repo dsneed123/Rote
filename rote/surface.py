@@ -279,6 +279,17 @@ _JS_DESCRIBE = _JS_HELPERS + r"""
 }
 """
 
+_JS_HARVEST = _JS_HELPERS + r"""
+(labels) => {
+  const want = new Set(labels.map(norm)); const out = [];
+  for (const cell of document.querySelectorAll('td, th')) {
+    const label = norm(labelNear(cell));
+    if (label && want.has(label)) { const v = txt(cell); if (v) out.push([label, v]); }
+  }
+  return out;
+}
+"""
+
 _JS_FIND_VALUE = _JS_HELPERS + r"""
 ([value, startId]) => {
   // The deepest elements whose whole text is exactly the value.
@@ -337,6 +348,7 @@ class WebSurface:
         self.cdp_port = cdp_port
         self.secrets = secrets
         self.on_human_event = on_human_event
+        self.sensitive_labels: list[str] = []   # set from the app profile
         self.blocked: list[str] = []      # requests aborted by the allowlist
         self._inflight = 0
         self._text_cache: dict[Any, tuple[float, str]] = {}
@@ -619,6 +631,7 @@ class WebSurface:
 
     def observe(self, screenshot: Path | None = None) -> Observation:
         self.settle()
+        self.harvest_sensitive()     # before anything from this screen is logged
         elements: list[Element] = []
         text: dict[str, str] = {}
         next_id = 1
@@ -714,14 +727,30 @@ class WebSurface:
 
     # -- evidence --
 
+    def harvest_sensitive(self) -> None:
+        """Teach the redactor the PII on this screen that no pattern catches:
+        the values beside the profile's sensitive labels (a name, an address)."""
+        if not self.sensitive_labels:
+            return
+        for frame in self._frames():
+            try:
+                pairs = frame.evaluate(_JS_HARVEST, self.sensitive_labels)
+            except Exception:
+                continue
+            for label, value in pairs:
+                self.redactor.know(value, f"pii:{label.replace(' ', '_')}")
+
     def screenshot(self, path: Path) -> Path:
         """A screenshot with sensitive text masked before it is written."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
+        self.harvest_sensitive()
         masks = []
         for frame in self._frames():
             for pattern in self.redactor.screen_patterns:
                 masks.append(frame.get_by_text(re.compile(pattern)))
+            for value in self.redactor.known_values:
+                masks.append(frame.get_by_text(value, exact=True))
         try:
             self.page.screenshot(path=str(path), mask=masks, mask_color="#222222", timeout=5_000)
         except Exception:
@@ -730,6 +759,7 @@ class WebSurface:
 
     def accessibility_snapshot(self) -> str:
         """Every frame's ARIA snapshot, redacted — the DOM-level evidence."""
+        self.harvest_sensitive()
         parts = []
         for frame in self._frames():
             try:

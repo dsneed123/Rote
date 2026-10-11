@@ -154,6 +154,8 @@ class Replayer:
                  max_interventions_per_step: int = 2) -> None:
         self.surface = surface
         self.profile = profile
+        if hasattr(surface, "sensitive_labels"):
+            surface.sensitive_labels = list(profile.sensitive_labels)
         self.log = log
         self.redactor = redactor
         self.session = session or SessionControl()

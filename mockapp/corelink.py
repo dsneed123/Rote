@@ -100,6 +100,7 @@ class Faults:
     notice_once: bool = False         # next inquiry shows the system notice
     error_once: bool = False          # next inquiry returns a system error
     expire_session: bool = False      # current sessions are treated as expired
+    password_prompt_once: bool = False  # next inquiry shows a dialog the profile doesn't know
 
     def update(self, raw: dict) -> None:
         for key, value in raw.items():
@@ -349,6 +350,16 @@ class Handler(BaseHTTPRequestHandler):
             faults.error_once = False
             self._send(page(state, "System Error", panel("CORELINK TELLER", message_box(
                 "SYSTEM ERROR 0x5E1 - HOST TRANSACTION ABORTED. CONTACT SUPPORT."), state.tenant.colour)), 500)
+            return
+
+        if faults.password_prompt_once:
+            faults.password_prompt_once = False
+            self._send(page(state, "Password Notice", panel("OPERATOR SECURITY", (
+                "<p>Your password expires in 3 days. Change it now?</p>"
+                "<form method='post' action='/notice'>"
+                f"<input type='hidden' name='f_0012' value='{e(number)}'>"
+                "<input type='submit' value='Remind Me Later'></form>"
+            ), "#660066")))
             return
 
         if faults.notice_once:

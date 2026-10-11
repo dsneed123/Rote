@@ -48,6 +48,11 @@ sign_on:
 signed_in:
   - {kind: url, path_regex: "^/main$"}
 
+# Values beside these labels are PII with no regex shape (names, addresses).
+# They are harvested off each screen and redacted from logs, snapshots and
+# screenshots. SSN and dates are caught by pattern anyway; listed for clarity.
+sensitive_labels: [Name, SSN, Birth Date, Address, Phone, Email]
+
 detectors:
   # --- recoverable: known interruptions with a known remedy ---
   - code: session_expired

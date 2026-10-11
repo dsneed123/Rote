@@ -119,3 +119,11 @@ def test_screenshot_masks_and_snapshot_redacts(surface, tmp_path):
     assert path.stat().st_size > 1000
     snap = surface.accessibility_snapshot()
     assert "900-12-3456" not in snap and "<ssn>" in snap
+
+
+def test_profile_labels_redact_names(surface):
+    surface.sensitive_labels = ["Name", "SSN"]
+    to_member(surface)
+    snap = surface.accessibility_snapshot()
+    assert "JANE Q SAMPLE" not in snap and "<pii:name>" in snap
+    assert surface.redactor.text("thought: JANE Q SAMPLE has $5") == "thought: <pii:name> has <amount>"

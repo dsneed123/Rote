@@ -518,6 +518,10 @@ class AppProfile(Model):
     sign_on: list[Step] = Field(default_factory=list)
     signed_in: list[Check] = Field(default_factory=list)   # how to tell we are in
     detectors: list[Detector] = Field(default_factory=list)
+    # On-screen labels whose neighbouring value is PII ("Name", "SSN"). Names
+    # and addresses have no pattern a regex could catch, so the product says
+    # where they are; the values found there are redacted from all evidence.
+    sensitive_labels: list[str] = Field(default_factory=list)
 
 
 # --- tenant overlays --------------------------------------------------------------

@@ -109,6 +109,8 @@ class Discoverer:
                  max_steps: int = 20, max_errors: int = 3, max_duration_s: float = 900) -> None:
         self.surface = surface
         self.profile = profile
+        if hasattr(surface, "sensitive_labels"):
+            surface.sensitive_labels = list(profile.sensitive_labels)
         self.log = log
         self.redactor = redactor
         self.ai = ai

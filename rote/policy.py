@@ -205,6 +205,10 @@ class Redactor:
         if len(text) >= 3:   # don't mask "1" everywhere
             self._known[text] = label
 
+    @property
+    def known_values(self) -> list[str]:
+        return list(self._known)
+
     def forget_all(self) -> None:
         self._known.clear()
 
