@@ -1,0 +1,22 @@
+# Guardrails for automating CoreLink Teller. The tenant's own base URL is added
+# to allowed_origins at run time; nothing else is reachable.
+name: corelink-teller
+allowed_origins: []
+allowed_paths:
+  - ^/$
+  - ^/(login|main|banner|nav|home|logout)$
+  - ^/(inquiry|notice|member)$
+  - ^/share/(new|review|post)$
+blocked_paths:
+  - ^/__control          # the test harness's fault injection; never the agent's
+allowed_actions: [navigate, click, fill, select, press, extract, wait_for]
+blocked_controls:
+  - close account
+  - charge off
+risk:
+  read: allow
+  input: allow
+  submit: allow
+  commit: approved       # replay: only if the capability is approved. discovery: ask a human
+max_steps: 20
+redact_money_in_logs: true
