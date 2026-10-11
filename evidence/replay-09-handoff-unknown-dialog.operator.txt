@@ -1,0 +1,4 @@
+[operator] intervention 7593bb80: checkpoint_failed — after click, the expected screen did not appear
+[operator] took control
+[operator] clicked 'Remind Me Later' in the live session
+[operator] handed control back

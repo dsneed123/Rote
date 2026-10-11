@@ -1,0 +1,37 @@
+replay run 20261011T023717Z-replay-d14997: corelink.member.read_savings_balance v1.0.0 (DRAFT) — evidence in evidence/20261011T023717Z-replay-d14997
+  · run_start      capability=corelink.member.read_savings_balance version=1.0.0 fingerprint=51ffd1b525177691 approved=False inputs={'member_id': '99999'}
+  · navigate       path=/main location={'top': '/login'}
+  · detected       code=signed_out disposition=recoverable step=entry message=Landed on the sign-on screen (never signed in, or bounced out).
+  · sign_on        steps=4
+  · recovered      code=signed_out via=reauthenticate step=entry attempt=1
+  · step_start     index=0 step=navigate_to_member_inquiry action=click target=link 'Member Inquiry' note=Clicking 'Member Inquiry' will take me to a screen where I can enter member ID {{inputs.member_id}} and look up their 
+  · resolved       step=navigate_to_member_inquiry strategy=role strategy_index=0 control=Member Inquiry
+  · acted          step=navigate_to_member_inquiry action=click risk=read
+  · checkpoint_ok  step=navigate_to_member_inquiry checks=[text=MEMBER INQUIRY, frame={'name': 'main'}]
+  · step_ok        index=0 step=navigate_to_member_inquiry
+  · step_start     index=1 step=enter_member_number action=fill target=textbox 'Member Number:' note=I'm at the Member Inquiry screen where I need to enter the member ID {{inputs.member_id}}. The textbox is ready for input, 
+  · resolved       step=enter_member_number strategy=label_near strategy_index=0 control=Member Number:
+  · acted          step=enter_member_number action=fill risk=input value={{inputs.member_id}}
+  · step_ok        index=1 step=enter_member_number
+  · step_start     index=2 step=submit_member_inquiry action=click target=button 'Inquire' note=I've entered the member number {{inputs.member_id}} in the Member Number field. Now I need to submit the inquiry by clicking the
+  · resolved       step=submit_member_inquiry strategy=role strategy_index=0 control=Inquire
+  · acted          step=submit_member_inquiry action=click risk=submit
+  · detected       code=member_not_found disposition=business step=submit_member_inquiry message=NO RECORD FOUND FOR MEMBER 99999
+  · business_outcome code=member_not_found evidence=['evidence/20261011T023717Z-replay-d14997/01-outcome-member_not_found.png']
+  · run_end        status=business_outcome outcome=member_not_found events=0 duration_ms=3278
+{
+  "run_id": "20261011T023717Z-replay-d14997",
+  "capability": "corelink.member.read_savings_balance",
+  "version": "1.0.0",
+  "status": "business_outcome",
+  "outputs": {},
+  "outcome": {
+    "code": "member_not_found",
+    "message": "NO RECORD FOUND FOR MEMBER 99999",
+    "step_id": "submit_member_inquiry"
+  },
+  "events": [],
+  "steps_completed": 2,
+  "duration_ms": 3278,
+  "evidence_dir": "evidence/20261011T023717Z-replay-d14997"
+}

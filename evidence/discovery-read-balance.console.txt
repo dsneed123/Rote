@@ -1,0 +1,33 @@
+discovery run 20261011T023321Z-discovery-3c83bb with qwen3-vl:30b — evidence in evidence/20261011T023321Z-discovery-3c83bb
+  · discovery_start goal=Look up member 12345 and read their current primary savings balance product=corelink-teller entry=/main params={'member_id': '12345'} model=qwen3-vl:30b
+  · detected       code=signed_out disposition=recoverable message=Landed on the sign-on screen (never signed in, or bounced out).
+  · sign_on        steps=4
+  · recovered      code=signed_out via=reauthenticate
+  · prompt         chars=553 elements=3
+  · model_reply    chars=340 thinking_chars=694 eval_ms=3683
+  · decision       turn=1 screen=TELLER HOME action=click element=1 thought=Clicking 'Member Inquiry' will take me to a screen where I can enter member ID 12345 and look up their account information, including primary saving
+  · acted          turn=1 action=click control=Member Inquiry risk=read locators=['role', 'text', 'css']
+  · prompt         chars=655 elements=5
+  · model_reply    chars=379 thinking_chars=800 eval_ms=4265
+  · checkpoint_recorded step=navigate_to_member_inquiry text=MEMBER INQUIRY fresh=True
+  · decision       turn=2 screen=MEMBER INQUIRY action=fill element=4 value={{inputs.member_id}} thought=I'm at the Member Inquiry screen where I need to enter the member ID 12345. The textbox is ready for input, so my first
+  · acted          turn=2 action=fill control=Member Number: risk=input value={{inputs.member_id}} locators=['label_near', 'css']
+  · prompt         chars=737 elements=5
+  · model_reply    chars=402 thinking_chars=871 eval_ms=4362
+  · decision       turn=3 screen=MEMBER INQUIRY action=click element=5 thought=I've entered the member number 12345 in the Member Number field. Now I need to submit the inquiry by clicking the Inquire button to view the memb
+  · acted          turn=3 action=click control=Inquire risk=submit locators=['role', 'css']
+  · prompt         chars=930 elements=5
+  · model_reply    chars=405 thinking_chars=955 eval_ms=6064
+  · checkpoint_recorded step=submit_member_inquiry text=MEMBER INQUIRY - DETAIL fresh=True
+  · decision       turn=4 screen=MEMBER INQUIRY - DETAIL action=extract element=0 value=<amount> output=primary_savings_balance thought=We've successfully found member 12345's details and can see their primary savings balanc
+  · extracted      turn=4 output=primary_savings_balance type=money locators=['table_cell', 'table_cell', 'label_near', 'css']
+  · prompt         chars=1016 elements=5
+  · model_reply    chars=422 thinking_chars=729 eval_ms=4349
+  · decision       turn=5 screen=MEMBER INQUIRY - DETAIL action=done thought=The goal was to look up member 12345 and read their current primary savings balance. We've successfully retrieved this information from the screen,
+  · success_text_substituted used=MEMBER INQUIRY - DETAIL rejected=["'<pii:primary_savings_balance>' is data, not a heading"]
+  · done           success=['MEMBER INQUIRY - DETAIL', '{{inputs.member_id}}']
+  · discovery_end  status=recorded message=goal reached turns=5 steps=4 outputs=['primary_savings_balance']
+
+discovery: recorded after 5 turn(s) — goal reached
+  · recorded       capability=corelink.member.read_savings_balance version=1.0.0 path=/home/dsneedy/Desktop/projects/Rote/library/capabilities/corelink.member.read_savings_balance/1.0.0.yaml fingerprint=51ffd1b525177691
+recorded corelink.member.read_savings_balance v1.0.0 (draft) → /home/dsneedy/Desktop/projects/Rote/library/capabilities/corelink.member.read_savings_balance/1.0.0.yaml

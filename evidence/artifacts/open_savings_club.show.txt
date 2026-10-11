@@ -1,0 +1,53 @@
+corelink.share.open_savings_club v1.0.0 — Open a savings club share for a member
+  product corelink-teller (web), entry /main; side effects: irreversible; APPROVED; fingerprint 06229c484abfbfa7
+  discovered by qwen3-vl:30b in run 20261011T025202Z-discovery-a817bf (2026-10-11T02:53:18+00:00); human steps: 0
+  inputs:
+    member_id: string \d{4,9} [internal]
+    nickname: string [internal]
+    deposit: money [internal]
+  outputs:
+    confirmation_number: integer [pii]
+  business outcomes: member_not_found, invalid_member_number, access_restricted, validation_error
+  steps:
+   1. [read  ] open_member_inquiry: click link 'Member Inquiry'
+        locate role {'role': 'link', 'name': 'Member Inquiry', 'exact': True} in frame nav
+        else   text {'text': 'Member Inquiry', 'exact': True}
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(1) > td > a'}
+        expect text: MEMBER INQUIRY
+   2. [input ] enter_member_number: fill textbox 'Member Number:' ← {{inputs.member_id}}
+        locate label_near {'label': 'Member Number:', 'role': 'textbox'} in frame main
+        else   css {'css': 'input[name="f_0012"]'}
+   3. [submit] submit_member_inquiry: click button 'Inquire'
+        locate role {'role': 'button', 'name': 'Inquire', 'exact': True} in frame main
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > form > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > input'}
+        expect text: MEMBER INQUIRY - DETAIL
+   4. [read  ] open_new_share: click link 'Open Share'
+        locate role {'role': 'link', 'name': 'Open Share', 'exact': True} in frame main
+        else   text {'text': 'Open Share', 'exact': True}
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > a:nth-of-type(1)'}
+        expect text: SHARE MAINTENANCE - OPEN SHARE
+   5. [read  ] select_share_type: click combobox 'Share Type'
+        locate label_near {'label': 'Share Type', 'role': 'combobox'} in frame main
+        else   css {'css': 'select[name="f_0031"]'}
+        expect text: SHARE MAINTENANCE - OPEN SHARE
+   6. [input ] select_savings_club: select combobox 'Share Type' ← SAVINGS CLUB
+        locate label_near {'label': 'Share Type', 'role': 'combobox'} in frame main
+        else   css {'css': 'select[name="f_0031"]'}
+   7. [input ] enter_nickname: fill textbox 'Nickname' ← {{inputs.nickname}}
+        locate label_near {'label': 'Nickname', 'role': 'textbox'} in frame main
+        else   css {'css': 'input[name="f_0032"]'}
+   8. [input ] enter_opening_deposit: fill textbox 'Opening Deposit' ← {{inputs.deposit}}
+        locate label_near {'label': 'Opening Deposit', 'role': 'textbox'} in frame main
+        else   css {'css': 'input[name="f_0033"]'}
+   9. [submit] click_continue: click button 'Continue'
+        locate role {'role': 'button', 'name': 'Continue', 'exact': True} in frame main
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > form > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > input'}
+        expect text: SHARE MAINTENANCE - REVIEW
+   10. [commit] post_new_share: click button 'Post'
+        locate role {'role': 'button', 'name': 'Post', 'exact': True} in frame main
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > form > input:nth-of-type(5)'}
+        expect text: SHARE MAINTENANCE - CONFIRMATION
+   11. [read  ] read_confirmation_number: extract value for confirmation_number → confirmation_number
+        locate text {'text': 'OPENED. CONFIRMATION', 'exact': False} in frame main
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > table > tbody > tr > td > font > b'}
+  success when: SHARE MAINTENANCE - CONFIRMATION

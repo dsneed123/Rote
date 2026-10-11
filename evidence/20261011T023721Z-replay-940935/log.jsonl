@@ -1,0 +1,20 @@
+{"t": 0.53, "at": "2026-10-11T02:37:22.412+00:00", "event": "run_start", "capability": "corelink.member.read_savings_balance", "version": "1.0.0", "fingerprint": "51ffd1b525177691", "approved": false, "tenant": null, "inputs": {"member_id": "77777"}}
+{"t": 0.844, "at": "2026-10-11T02:37:22.726+00:00", "event": "navigate", "path": "/main", "location": {"top": "/login"}}
+{"t": 0.853, "at": "2026-10-11T02:37:22.735+00:00", "event": "detected", "code": "signed_out", "disposition": "recoverable", "step": "entry", "message": "Landed on the sign-on screen (never signed in, or bounced out)."}
+{"t": 0.854, "at": "2026-10-11T02:37:22.735+00:00", "event": "sign_on", "steps": 4}
+{"t": 2.728, "at": "2026-10-11T02:37:24.609+00:00", "event": "recovered", "code": "signed_out", "via": "reauthenticate", "step": "entry", "attempt": 1}
+{"t": 2.752, "at": "2026-10-11T02:37:24.634+00:00", "event": "step_start", "index": 0, "step": "navigate_to_member_inquiry", "action": "click", "target": "link 'Member Inquiry'", "note": "Clicking 'Member Inquiry' will take me to a screen where I can enter member ID {{inputs.member_id}} and look up their account information, including primary..."}
+{"t": 2.796, "at": "2026-10-11T02:37:24.678+00:00", "event": "resolved", "step": "navigate_to_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Member Inquiry"}
+{"t": 3.133, "at": "2026-10-11T02:37:25.015+00:00", "event": "acted", "step": "navigate_to_member_inquiry", "action": "click", "risk": "read", "value": null}
+{"t": 3.137, "at": "2026-10-11T02:37:25.019+00:00", "event": "checkpoint_ok", "step": "navigate_to_member_inquiry", "checks": "[text=MEMBER INQUIRY, frame={'name': 'main'}]"}
+{"t": 3.137, "at": "2026-10-11T02:37:25.019+00:00", "event": "step_ok", "index": 0, "step": "navigate_to_member_inquiry"}
+{"t": 3.137, "at": "2026-10-11T02:37:25.019+00:00", "event": "step_start", "index": 1, "step": "enter_member_number", "action": "fill", "target": "textbox 'Member Number:'", "note": "I'm at the Member Inquiry screen where I need to enter the member ID {{inputs.member_id}}. The textbox is ready for input, so my first action should be to..."}
+{"t": 3.179, "at": "2026-10-11T02:37:25.061+00:00", "event": "resolved", "step": "enter_member_number", "strategy": "label_near", "strategy_index": 0, "control": "Member Number:"}
+{"t": 3.454, "at": "2026-10-11T02:37:25.336+00:00", "event": "acted", "step": "enter_member_number", "action": "fill", "risk": "input", "value": "{{inputs.member_id}}"}
+{"t": 3.459, "at": "2026-10-11T02:37:25.341+00:00", "event": "step_ok", "index": 1, "step": "enter_member_number"}
+{"t": 3.459, "at": "2026-10-11T02:37:25.341+00:00", "event": "step_start", "index": 2, "step": "submit_member_inquiry", "action": "click", "target": "button 'Inquire'", "note": "I've entered the member number {{inputs.member_id}} in the Member Number field. Now I need to submit the inquiry by clicking the Inquire button to view the..."}
+{"t": 3.471, "at": "2026-10-11T02:37:25.353+00:00", "event": "resolved", "step": "submit_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Inquire"}
+{"t": 3.796, "at": "2026-10-11T02:37:25.678+00:00", "event": "acted", "step": "submit_member_inquiry", "action": "click", "risk": "submit", "value": null}
+{"t": 3.803, "at": "2026-10-11T02:37:25.685+00:00", "event": "detected", "code": "access_restricted", "disposition": "business", "step": "submit_member_inquiry", "message": "ACCESS DENIED - RESTRICTED ACCOUNT. SUPERVISOR OVERRIDE REQUIRED"}
+{"t": 3.871, "at": "2026-10-11T02:37:25.753+00:00", "event": "business_outcome", "code": "access_restricted", "evidence": ["evidence/20261011T023721Z-replay-940935/01-outcome-access_restricted.png"]}
+{"t": 3.871, "at": "2026-10-11T02:37:25.753+00:00", "event": "run_end", "status": "business_outcome", "outcome": "access_restricted", "failure": null, "events": 0, "duration_ms": 3341}

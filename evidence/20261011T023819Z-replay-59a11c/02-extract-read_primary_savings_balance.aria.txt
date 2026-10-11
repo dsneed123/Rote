@@ -1,0 +1,65 @@
+# frame banner /banner
+- table:
+  - rowgroup:
+    - row "LAKESHORE CREDIT UNION CoreLink Teller 7.4 | Operator TELLER01":
+      - cell "LAKESHORE CREDIT UNION"
+      - cell "CoreLink Teller 7.4 | Operator TELLER01"
+
+# frame nav /nav
+- table:
+  - rowgroup:
+    - row "Sign Off":
+      - cell "Sign Off":
+        - link "Sign Off":
+          - /url: /logout
+    - row "Teller Home":
+      - cell "Teller Home":
+        - link "Teller Home":
+          - /url: /home
+    - row "Member Inquiry":
+      - cell "Member Inquiry":
+        - link "Member Inquiry":
+          - /url: /inquiry
+
+# frame main /member
+- table:
+  - rowgroup:
+    - row "MEMBER INQUIRY - DETAIL":
+      - cell "MEMBER INQUIRY - DETAIL"
+    - row "Member 12345 Name <pii:name> SSN <pii:ssn> Birth Date <pii:birth_date> Description Share Avail Bal Type PRIMARY SAVINGS S00 <amount> SAVINGS SHARE DRAFT S10 <amount> CHECKING Open Share New Inquiry":
+      - cell "Member 12345 Name <pii:name> SSN <pii:ssn> Birth Date <pii:birth_date> Description Share Avail Bal Type PRIMARY SAVINGS S00 <amount> SAVINGS SHARE DRAFT S10 <amount> CHECKING Open Share New Inquiry":
+        - table:
+          - rowgroup:
+            - row "Member 12345":
+              - cell "Member"
+              - cell "12345"
+            - row "Name <pii:name>":
+              - cell "Name"
+              - cell "<pii:name>"
+            - row "SSN <pii:ssn>":
+              - cell "SSN"
+              - cell "<pii:ssn>"
+            - row "Birth Date <pii:birth_date>":
+              - cell "Birth Date"
+              - cell "<pii:birth_date>"
+        - table:
+          - rowgroup:
+            - row "Description Share Avail Bal Type":
+              - cell "Description"
+              - cell "Share"
+              - cell "Avail Bal"
+              - cell "Type"
+            - row "PRIMARY SAVINGS S00 <amount> SAVINGS":
+              - cell "PRIMARY SAVINGS"
+              - cell "S00"
+              - cell "<amount>"
+              - cell "SAVINGS"
+            - row "SHARE DRAFT S10 <amount> CHECKING":
+              - cell "SHARE DRAFT"
+              - cell "S10"
+              - cell "<amount>"
+              - cell "CHECKING"
+        - link "Open Share":
+          - /url: /share/new?m=12345
+        - link "New Inquiry":
+          - /url: /inquiry

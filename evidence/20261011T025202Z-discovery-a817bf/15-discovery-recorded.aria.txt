@@ -1,0 +1,36 @@
+# frame banner /banner
+- table:
+  - rowgroup:
+    - row "FIRST COMMUNITY FCU CoreLink Teller 7.4 | Operator TELLER01":
+      - cell "FIRST COMMUNITY FCU"
+      - cell "CoreLink Teller 7.4 | Operator TELLER01"
+
+# frame nav /nav
+- table:
+  - rowgroup:
+    - row "Member Inquiry":
+      - cell "Member Inquiry":
+        - link "Member Inquiry":
+          - /url: /inquiry
+    - row "Teller Home":
+      - cell "Teller Home":
+        - link "Teller Home":
+          - /url: /home
+    - row "Sign Off":
+      - cell "Sign Off":
+        - link "Sign Off":
+          - /url: /logout
+
+# frame main /share/post
+- table:
+  - rowgroup:
+    - row "SHARE MAINTENANCE - CONFIRMATION":
+      - cell "SHARE MAINTENANCE - CONFIRMATION"
+    - row "<pii:confirmation_number> Return to Member":
+      - cell "<pii:confirmation_number> Return to Member":
+        - table:
+          - rowgroup:
+            - row "<pii:confirmation_number>":
+              - cell "<pii:confirmation_number>"
+        - link "Return to Member":
+          - /url: /member?m=12345

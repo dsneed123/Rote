@@ -1,0 +1,19 @@
+{"t": 0.485, "at": "2026-10-11T02:37:38.173+00:00", "event": "run_start", "capability": "corelink.member.read_savings_balance", "version": "1.0.0", "fingerprint": "51ffd1b525177691", "approved": false, "tenant": null, "inputs": {"member_id": "12345"}}
+{"t": 0.784, "at": "2026-10-11T02:37:38.472+00:00", "event": "navigate", "path": "/main", "location": {"top": "/login"}}
+{"t": 0.794, "at": "2026-10-11T02:37:38.482+00:00", "event": "detected", "code": "signed_out", "disposition": "recoverable", "step": "entry", "message": "Landed on the sign-on screen (never signed in, or bounced out)."}
+{"t": 0.794, "at": "2026-10-11T02:37:38.482+00:00", "event": "sign_on", "steps": 4}
+{"t": 2.692, "at": "2026-10-11T02:37:40.380+00:00", "event": "recovered", "code": "signed_out", "via": "reauthenticate", "step": "entry", "attempt": 1}
+{"t": 2.704, "at": "2026-10-11T02:37:40.392+00:00", "event": "step_start", "index": 0, "step": "navigate_to_member_inquiry", "action": "click", "target": "link 'Member Inquiry'", "note": "Clicking 'Member Inquiry' will take me to a screen where I can enter member ID {{inputs.member_id}} and look up their account information, including primary..."}
+{"t": 2.749, "at": "2026-10-11T02:37:40.437+00:00", "event": "resolved", "step": "navigate_to_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Member Inquiry"}
+{"t": 3.096, "at": "2026-10-11T02:37:40.784+00:00", "event": "acted", "step": "navigate_to_member_inquiry", "action": "click", "risk": "read", "value": null}
+{"t": 3.1, "at": "2026-10-11T02:37:40.788+00:00", "event": "checkpoint_ok", "step": "navigate_to_member_inquiry", "checks": "[text=MEMBER INQUIRY, frame={'name': 'main'}]"}
+{"t": 3.1, "at": "2026-10-11T02:37:40.788+00:00", "event": "step_ok", "index": 0, "step": "navigate_to_member_inquiry"}
+{"t": 3.1, "at": "2026-10-11T02:37:40.788+00:00", "event": "step_start", "index": 1, "step": "enter_member_number", "action": "fill", "target": "textbox 'Member Number:'", "note": "I'm at the Member Inquiry screen where I need to enter the member ID {{inputs.member_id}}. The textbox is ready for input, so my first action should be to..."}
+{"t": 3.148, "at": "2026-10-11T02:37:40.835+00:00", "event": "resolved", "step": "enter_member_number", "strategy": "label_near", "strategy_index": 0, "control": "Member Number:"}
+{"t": 3.426, "at": "2026-10-11T02:37:41.114+00:00", "event": "acted", "step": "enter_member_number", "action": "fill", "risk": "input", "value": "{{inputs.member_id}}"}
+{"t": 3.433, "at": "2026-10-11T02:37:41.121+00:00", "event": "step_ok", "index": 1, "step": "enter_member_number"}
+{"t": 3.433, "at": "2026-10-11T02:37:41.121+00:00", "event": "step_start", "index": 2, "step": "submit_member_inquiry", "action": "click", "target": "button 'Inquire'", "note": "I've entered the member number {{inputs.member_id}} in the Member Number field. Now I need to submit the inquiry by clicking the Inquire button to view the..."}
+{"t": 3.447, "at": "2026-10-11T02:37:41.134+00:00", "event": "resolved", "step": "submit_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Inquire"}
+{"t": 3.777, "at": "2026-10-11T02:37:41.465+00:00", "event": "acted", "step": "submit_member_inquiry", "action": "click", "risk": "submit", "value": null}
+{"t": 3.784, "at": "2026-10-11T02:37:41.472+00:00", "event": "detected", "code": "host_error", "disposition": "failure", "step": "submit_member_inquiry", "message": "SYSTEM ERROR 0x5E1 - HOST TRANSACTION ABORTED"}
+{"t": 5.895, "at": "2026-10-11T02:37:43.583+00:00", "event": "run_end", "status": "failed", "outcome": null, "failure": "app_error", "events": 0, "duration_ms": 5410}

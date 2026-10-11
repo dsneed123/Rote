@@ -1,0 +1,76 @@
+[
+  {
+    "name": "corelink__member__read_savings_balance",
+    "description": "Read a member's primary savings balance. Recorded from the goal: Look up member 12345 and read their current primary savings balance",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "member_id": {
+          "type": "string",
+          "description": "",
+          "pattern": "\\d{4,9}"
+        }
+      },
+      "required": [
+        "member_id"
+      ]
+    },
+    "x-rote": {
+      "capability": "corelink.member.read_savings_balance",
+      "version": "1.0.0",
+      "approved": false,
+      "side_effects": "none",
+      "outputs": {
+        "primary_savings_balance": "money"
+      },
+      "business_outcomes": [
+        "member_not_found",
+        "invalid_member_number",
+        "access_restricted",
+        "validation_error"
+      ]
+    }
+  },
+  {
+    "name": "corelink__share__open_savings_club",
+    "description": "Open a savings club share for a member. Recorded from the goal: Open a new savings club share for member 12345 with nickname VACATION and an opening deposit of 25.00, post it, and read the confirmation number",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "member_id": {
+          "type": "string",
+          "description": "",
+          "pattern": "\\d{4,9}"
+        },
+        "nickname": {
+          "type": "string",
+          "description": ""
+        },
+        "deposit": {
+          "type": "string",
+          "description": ""
+        }
+      },
+      "required": [
+        "member_id",
+        "nickname",
+        "deposit"
+      ]
+    },
+    "x-rote": {
+      "capability": "corelink.share.open_savings_club",
+      "version": "1.0.0",
+      "approved": true,
+      "side_effects": "irreversible",
+      "outputs": {
+        "confirmation_number": "integer"
+      },
+      "business_outcomes": [
+        "member_not_found",
+        "invalid_member_number",
+        "access_restricted",
+        "validation_error"
+      ]
+    }
+  }
+]

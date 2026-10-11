@@ -1,0 +1,25 @@
+{"t": 0.468, "at": "2026-10-11T02:37:44.346+00:00", "event": "run_start", "capability": "corelink.member.read_savings_balance", "version": "1.0.0", "fingerprint": "51ffd1b525177691", "approved": false, "tenant": null, "inputs": {"member_id": "30003"}}
+{"t": 2.263, "at": "2026-10-11T02:37:46.141+00:00", "event": "navigate", "path": "/main", "location": {"top": "/login"}}
+{"t": 2.272, "at": "2026-10-11T02:37:46.149+00:00", "event": "detected", "code": "signed_out", "disposition": "recoverable", "step": "entry", "message": "Landed on the sign-on screen (never signed in, or bounced out)."}
+{"t": 2.272, "at": "2026-10-11T02:37:46.149+00:00", "event": "sign_on", "steps": 4}
+{"t": 11.628, "at": "2026-10-11T02:37:55.505+00:00", "event": "recovered", "code": "signed_out", "via": "reauthenticate", "step": "entry", "attempt": 1}
+{"t": 11.64, "at": "2026-10-11T02:37:55.517+00:00", "event": "step_start", "index": 0, "step": "navigate_to_member_inquiry", "action": "click", "target": "link 'Member Inquiry'", "note": "Clicking 'Member Inquiry' will take me to a screen where I can enter member ID {{inputs.member_id}} and look up their account information, including primary..."}
+{"t": 11.681, "at": "2026-10-11T02:37:55.558+00:00", "event": "resolved", "step": "navigate_to_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Member Inquiry"}
+{"t": 13.54, "at": "2026-10-11T02:37:57.417+00:00", "event": "acted", "step": "navigate_to_member_inquiry", "action": "click", "risk": "read", "value": null}
+{"t": 13.544, "at": "2026-10-11T02:37:57.421+00:00", "event": "checkpoint_ok", "step": "navigate_to_member_inquiry", "checks": "[text=MEMBER INQUIRY, frame={'name': 'main'}]"}
+{"t": 13.544, "at": "2026-10-11T02:37:57.421+00:00", "event": "step_ok", "index": 0, "step": "navigate_to_member_inquiry"}
+{"t": 13.544, "at": "2026-10-11T02:37:57.421+00:00", "event": "step_start", "index": 1, "step": "enter_member_number", "action": "fill", "target": "textbox 'Member Number:'", "note": "I'm at the Member Inquiry screen where I need to enter the member ID {{inputs.member_id}}. The textbox is ready for input, so my first action should be to..."}
+{"t": 13.586, "at": "2026-10-11T02:37:57.463+00:00", "event": "resolved", "step": "enter_member_number", "strategy": "label_near", "strategy_index": 0, "control": "Member Number:"}
+{"t": 13.861, "at": "2026-10-11T02:37:57.738+00:00", "event": "acted", "step": "enter_member_number", "action": "fill", "risk": "input", "value": "{{inputs.member_id}}"}
+{"t": 13.868, "at": "2026-10-11T02:37:57.745+00:00", "event": "step_ok", "index": 1, "step": "enter_member_number"}
+{"t": 13.868, "at": "2026-10-11T02:37:57.745+00:00", "event": "step_start", "index": 2, "step": "submit_member_inquiry", "action": "click", "target": "button 'Inquire'", "note": "I've entered the member number {{inputs.member_id}} in the Member Number field. Now I need to submit the inquiry by clicking the Inquire button to view the..."}
+{"t": 13.878, "at": "2026-10-11T02:37:57.755+00:00", "event": "resolved", "step": "submit_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Inquire"}
+{"t": 15.727, "at": "2026-10-11T02:37:59.604+00:00", "event": "acted", "step": "submit_member_inquiry", "action": "click", "risk": "submit", "value": null}
+{"t": 15.733, "at": "2026-10-11T02:37:59.611+00:00", "event": "checkpoint_ok", "step": "submit_member_inquiry", "checks": "[text=MEMBER INQUIRY - DETAIL, frame={'name': 'main'}]"}
+{"t": 15.734, "at": "2026-10-11T02:37:59.611+00:00", "event": "step_ok", "index": 2, "step": "submit_member_inquiry"}
+{"t": 15.734, "at": "2026-10-11T02:37:59.611+00:00", "event": "step_start", "index": 3, "step": "read_primary_savings_balance", "action": "extract", "target": "value for primary_savings_balance", "note": "We've successfully found member {{inputs.member_id}}'s details and can see their primary savings balance is <pii:primary_savings_balance> in the table."}
+{"t": 15.777, "at": "2026-10-11T02:37:59.655+00:00", "event": "resolved", "step": "read_primary_savings_balance", "strategy": "table_cell", "strategy_index": 0, "control": "PRIMARY SAVINGS"}
+{"t": 15.787, "at": "2026-10-11T02:37:59.665+00:00", "event": "extracted", "step": "read_primary_savings_balance", "output": "primary_savings_balance", "type": "money", "value": "<pii:primary_savings_balance>"}
+{"t": 15.791, "at": "2026-10-11T02:37:59.668+00:00", "event": "step_ok", "index": 3, "step": "read_primary_savings_balance"}
+{"t": 15.791, "at": "2026-10-11T02:37:59.668+00:00", "event": "checkpoint_ok", "step": "success", "checks": "[text=MEMBER INQUIRY - DETAIL, frame={'name': 'main'}]; [text={{inputs.member_id}}, frame={'name': 'main'}]"}
+{"t": 15.88, "at": "2026-10-11T02:37:59.757+00:00", "event": "run_end", "status": "succeeded", "outcome": null, "failure": null, "events": 0, "duration_ms": 15323}

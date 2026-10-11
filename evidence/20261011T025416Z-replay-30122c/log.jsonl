@@ -1,0 +1,47 @@
+{"t": 0.498, "at": "2026-10-11T02:54:16.874+00:00", "event": "run_start", "capability": "corelink.share.open_savings_club", "version": "1.0.0", "fingerprint": "06229c484abfbfa7", "approved": true, "tenant": null, "inputs": {"member_id": "30003", "nickname": "TINY", "deposit": "1.00"}}
+{"t": 0.794, "at": "2026-10-11T02:54:17.169+00:00", "event": "navigate", "path": "/main", "location": {"top": "/login"}}
+{"t": 0.802, "at": "2026-10-11T02:54:17.178+00:00", "event": "detected", "code": "signed_out", "disposition": "recoverable", "step": "entry", "message": "Landed on the sign-on screen (never signed in, or bounced out)."}
+{"t": 0.802, "at": "2026-10-11T02:54:17.178+00:00", "event": "sign_on", "steps": 4}
+{"t": 2.651, "at": "2026-10-11T02:54:19.027+00:00", "event": "recovered", "code": "signed_out", "via": "reauthenticate", "step": "entry", "attempt": 1}
+{"t": 2.669, "at": "2026-10-11T02:54:19.045+00:00", "event": "step_start", "index": 0, "step": "open_member_inquiry", "action": "click", "target": "link 'Member Inquiry'", "note": "Clicking 'Member Inquiry' will likely take me to a screen where I can search for the member by ID ({{inputs.member_id}}) and then proceed to create a new..."}
+{"t": 2.714, "at": "2026-10-11T02:54:19.090+00:00", "event": "resolved", "step": "open_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Member Inquiry"}
+{"t": 3.052, "at": "2026-10-11T02:54:19.428+00:00", "event": "acted", "step": "open_member_inquiry", "action": "click", "risk": "read", "value": null}
+{"t": 3.055, "at": "2026-10-11T02:54:19.431+00:00", "event": "checkpoint_ok", "step": "open_member_inquiry", "checks": "[text=MEMBER INQUIRY, frame={'name': 'main'}]"}
+{"t": 3.055, "at": "2026-10-11T02:54:19.431+00:00", "event": "step_ok", "index": 0, "step": "open_member_inquiry"}
+{"t": 3.055, "at": "2026-10-11T02:54:19.431+00:00", "event": "step_start", "index": 1, "step": "enter_member_number", "action": "fill", "target": "textbox 'Member Number:'", "note": "I'm on the Member Inquiry screen and need to enter member ID {{inputs.member_id}} as the first step toward opening a new savings club share for this member."}
+{"t": 3.1, "at": "2026-10-11T02:54:19.475+00:00", "event": "resolved", "step": "enter_member_number", "strategy": "label_near", "strategy_index": 0, "control": "Member Number:"}
+{"t": 3.375, "at": "2026-10-11T02:54:19.751+00:00", "event": "acted", "step": "enter_member_number", "action": "fill", "risk": "input", "value": "{{inputs.member_id}}"}
+{"t": 3.382, "at": "2026-10-11T02:54:19.758+00:00", "event": "step_ok", "index": 1, "step": "enter_member_number"}
+{"t": 3.382, "at": "2026-10-11T02:54:19.758+00:00", "event": "step_start", "index": 2, "step": "submit_member_inquiry", "action": "click", "target": "button 'Inquire'", "note": "I've entered the member number {{inputs.member_id}}, so now I need to submit it by clicking the Inquire button to see the member's information before..."}
+{"t": 3.395, "at": "2026-10-11T02:54:19.771+00:00", "event": "resolved", "step": "submit_member_inquiry", "strategy": "role", "strategy_index": 0, "control": "Inquire"}
+{"t": 3.734, "at": "2026-10-11T02:54:20.110+00:00", "event": "acted", "step": "submit_member_inquiry", "action": "click", "risk": "submit", "value": null}
+{"t": 3.738, "at": "2026-10-11T02:54:20.114+00:00", "event": "checkpoint_ok", "step": "submit_member_inquiry", "checks": "[text=MEMBER INQUIRY - DETAIL, frame={'name': 'main'}]"}
+{"t": 3.738, "at": "2026-10-11T02:54:20.114+00:00", "event": "step_ok", "index": 2, "step": "submit_member_inquiry"}
+{"t": 3.738, "at": "2026-10-11T02:54:20.114+00:00", "event": "step_start", "index": 3, "step": "open_new_share", "action": "click", "target": "link 'Open Share'", "note": "I need to open a new savings club share for member {{inputs.member_id}}. The current screen shows the member inquiry details, and I can see an 'Open Share'..."}
+{"t": 3.77, "at": "2026-10-11T02:54:20.146+00:00", "event": "resolved", "step": "open_new_share", "strategy": "role", "strategy_index": 0, "control": "Open Share"}
+{"t": 4.067, "at": "2026-10-11T02:54:20.443+00:00", "event": "acted", "step": "open_new_share", "action": "click", "risk": "read", "value": null}
+{"t": 4.072, "at": "2026-10-11T02:54:20.448+00:00", "event": "checkpoint_ok", "step": "open_new_share", "checks": "[text=SHARE MAINTENANCE - OPEN SHARE, frame={'name': 'main'}]"}
+{"t": 4.072, "at": "2026-10-11T02:54:20.448+00:00", "event": "step_ok", "index": 3, "step": "open_new_share"}
+{"t": 4.072, "at": "2026-10-11T02:54:20.448+00:00", "event": "step_start", "index": 4, "step": "select_share_type", "action": "click", "target": "combobox 'Share Type'", "note": "I need to select 'SAVINGS CLUB' from the Share Type dropdown as part of opening a new savings club share. The combobox for Share Type is at element [4]."}
+{"t": 4.103, "at": "2026-10-11T02:54:20.479+00:00", "event": "resolved", "step": "select_share_type", "strategy": "label_near", "strategy_index": 0, "control": "Share Type"}
+{"t": 4.386, "at": "2026-10-11T02:54:20.761+00:00", "event": "acted", "step": "select_share_type", "action": "click", "risk": "read", "value": null}
+{"t": 4.388, "at": "2026-10-11T02:54:20.764+00:00", "event": "checkpoint_ok", "step": "select_share_type", "checks": "[text=SHARE MAINTENANCE - OPEN SHARE, frame={'name': 'main'}]"}
+{"t": 4.388, "at": "2026-10-11T02:54:20.764+00:00", "event": "step_ok", "index": 4, "step": "select_share_type"}
+{"t": 4.388, "at": "2026-10-11T02:54:20.764+00:00", "event": "step_start", "index": 5, "step": "select_savings_club", "action": "select", "target": "combobox 'Share Type'", "note": "I've opened the Share Type dropdown and now need to select 'SAVINGS CLUB' as specified in the goal."}
+{"t": 4.4, "at": "2026-10-11T02:54:20.776+00:00", "event": "resolved", "step": "select_savings_club", "strategy": "label_near", "strategy_index": 0, "control": "Share Type"}
+{"t": 4.672, "at": "2026-10-11T02:54:21.048+00:00", "event": "acted", "step": "select_savings_club", "action": "select", "risk": "input", "value": "SAVINGS CLUB"}
+{"t": 4.685, "at": "2026-10-11T02:54:21.061+00:00", "event": "step_ok", "index": 5, "step": "select_savings_club"}
+{"t": 4.685, "at": "2026-10-11T02:54:21.061+00:00", "event": "step_start", "index": 6, "step": "enter_nickname", "action": "fill", "target": "textbox 'Nickname'", "note": "Need to enter the nickname '{{inputs.nickname}}' in the Nickname field before proceeding to deposit amount and continuing."}
+{"t": 4.698, "at": "2026-10-11T02:54:21.074+00:00", "event": "resolved", "step": "enter_nickname", "strategy": "label_near", "strategy_index": 0, "control": "Nickname"}
+{"t": 4.976, "at": "2026-10-11T02:54:21.352+00:00", "event": "acted", "step": "enter_nickname", "action": "fill", "risk": "input", "value": "{{inputs.nickname}}"}
+{"t": 4.983, "at": "2026-10-11T02:54:21.358+00:00", "event": "step_ok", "index": 6, "step": "enter_nickname"}
+{"t": 4.983, "at": "2026-10-11T02:54:21.358+00:00", "event": "step_start", "index": 7, "step": "enter_opening_deposit", "action": "fill", "target": "textbox 'Opening Deposit'", "note": "I need to enter the opening deposit amount of ${{inputs.deposit}} into the Opening Deposit field before clicking Continue."}
+{"t": 4.994, "at": "2026-10-11T02:54:21.370+00:00", "event": "resolved", "step": "enter_opening_deposit", "strategy": "label_near", "strategy_index": 0, "control": "Opening Deposit"}
+{"t": 5.267, "at": "2026-10-11T02:54:21.642+00:00", "event": "acted", "step": "enter_opening_deposit", "action": "fill", "risk": "input", "value": "{{inputs.deposit}}"}
+{"t": 5.273, "at": "2026-10-11T02:54:21.649+00:00", "event": "step_ok", "index": 7, "step": "enter_opening_deposit"}
+{"t": 5.273, "at": "2026-10-11T02:54:21.649+00:00", "event": "step_start", "index": 8, "step": "click_continue", "action": "click", "target": "button 'Continue'", "note": "All required fields have been filled correctly (member ID: {{inputs.member_id}}, nickname: {{inputs.nickname}}, deposit: {{inputs.deposit}}). The next..."}
+{"t": 5.284, "at": "2026-10-11T02:54:21.659+00:00", "event": "resolved", "step": "click_continue", "strategy": "role", "strategy_index": 0, "control": "Continue"}
+{"t": 5.61, "at": "2026-10-11T02:54:21.986+00:00", "event": "acted", "step": "click_continue", "action": "click", "risk": "submit", "value": null}
+{"t": 5.62, "at": "2026-10-11T02:54:21.995+00:00", "event": "detected", "code": "validation_error", "disposition": "business", "step": "click_continue", "message": "MINIMUM OPENING DEPOSIT FOR SAVINGS CLUB IS <amount>"}
+{"t": 5.688, "at": "2026-10-11T02:54:22.064+00:00", "event": "business_outcome", "code": "validation_error", "evidence": ["evidence/20261011T025416Z-replay-30122c/01-outcome-validation_error.png"]}
+{"t": 5.688, "at": "2026-10-11T02:54:22.064+00:00", "event": "run_end", "status": "business_outcome", "outcome": "validation_error", "failure": null, "events": 0, "duration_ms": 5191}

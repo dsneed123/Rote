@@ -1,0 +1,27 @@
+corelink.member.read_savings_balance v1.0.0 — Read a member's primary savings balance
+  product corelink-teller (web), entry /main; side effects: none; draft; fingerprint 51ffd1b525177691
+  discovered by qwen3-vl:30b in run 20261011T023321Z-discovery-3c83bb (2026-10-11T02:33:51+00:00); human steps: 0
+  inputs:
+    member_id: string \d{4,9} [internal]
+  outputs:
+    primary_savings_balance: money [pii]
+  business outcomes: member_not_found, invalid_member_number, access_restricted, validation_error
+  steps:
+   1. [read  ] navigate_to_member_inquiry: click link 'Member Inquiry'
+        locate role {'role': 'link', 'name': 'Member Inquiry', 'exact': True} in frame nav
+        else   text {'text': 'Member Inquiry', 'exact': True}
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(1) > td > a'}
+        expect text: MEMBER INQUIRY
+   2. [input ] enter_member_number: fill textbox 'Member Number:' ← {{inputs.member_id}}
+        locate label_near {'label': 'Member Number:', 'role': 'textbox'} in frame main
+        else   css {'css': 'input[name="f_0012"]'}
+   3. [submit] submit_member_inquiry: click button 'Inquire'
+        locate role {'role': 'button', 'name': 'Inquire', 'exact': True} in frame main
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > form > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > input'}
+        expect text: MEMBER INQUIRY - DETAIL
+   4. [read  ] read_primary_savings_balance: extract value for primary_savings_balance → primary_savings_balance
+        locate table_cell {'row_column': 'Description', 'row_value': 'PRIMARY SAVINGS', 'column': 'Balance'} in frame main
+        else   table_cell {'row_column': 'Type', 'row_value': 'SAVINGS', 'column': 'Balance'}
+        else   label_near {'label': 'PRIMARY SAVINGS', 'role': 'cell'}
+        else   css {'css': 'body > font > table > tbody > tr:nth-of-type(2) > td > table:nth-of-type(2) > tbody > tr:nth-of-type(2) > td:nth-of-type(4)'}
+  success when: MEMBER INQUIRY - DETAIL; {{inputs.member_id}}

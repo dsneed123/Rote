@@ -1,0 +1,34 @@
+# frame banner /banner
+- table:
+  - rowgroup:
+    - row "FIRST COMMUNITY FCU CoreLink Teller 7.4 | Operator TELLER01":
+      - cell "FIRST COMMUNITY FCU"
+      - cell "CoreLink Teller 7.4 | Operator TELLER01"
+
+# frame nav /nav
+- table:
+  - rowgroup:
+    - row "Member Inquiry":
+      - cell "Member Inquiry":
+        - link "Member Inquiry":
+          - /url: /inquiry
+    - row "Teller Home":
+      - cell "Teller Home":
+        - link "Teller Home":
+          - /url: /home
+    - row "Sign Off":
+      - cell "Sign Off":
+        - link "Sign Off":
+          - /url: /logout
+
+# frame main /inquiry
+- table:
+  - rowgroup:
+    - row "CORELINK TELLER":
+      - cell "CORELINK TELLER"
+    - row "SYSTEM ERROR 0x5E1 - HOST TRANSACTION ABORTED. CONTACT SUPPORT.":
+      - cell "SYSTEM ERROR 0x5E1 - HOST TRANSACTION ABORTED. CONTACT SUPPORT.":
+        - table:
+          - rowgroup:
+            - row "SYSTEM ERROR 0x5E1 - HOST TRANSACTION ABORTED. CONTACT SUPPORT.":
+              - cell "SYSTEM ERROR 0x5E1 - HOST TRANSACTION ABORTED. CONTACT SUPPORT."

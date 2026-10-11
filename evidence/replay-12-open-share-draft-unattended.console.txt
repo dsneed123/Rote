@@ -1,0 +1,79 @@
+replay run 20261011T025403Z-replay-8c2d19: corelink.share.open_savings_club v1.0.0 (DRAFT) — evidence in evidence/20261011T025403Z-replay-8c2d19
+  · run_start      capability=corelink.share.open_savings_club version=1.0.0 fingerprint=06229c484abfbfa7 approved=False inputs={'member_id': '20001', 'nickname': 'XMAS', 'deposit': '40.00'}
+  · navigate       path=/main location={'top': '/login'}
+  · detected       code=signed_out disposition=recoverable step=entry message=Landed on the sign-on screen (never signed in, or bounced out).
+  · sign_on        steps=4
+  · recovered      code=signed_out via=reauthenticate step=entry attempt=1
+  · step_start     index=0 step=open_member_inquiry action=click target=link 'Member Inquiry' note=Clicking 'Member Inquiry' will likely take me to a screen where I can search for the member by ID ({{inputs.member_id}}) and 
+  · resolved       step=open_member_inquiry strategy=role strategy_index=0 control=Member Inquiry
+  · acted          step=open_member_inquiry action=click risk=read
+  · checkpoint_ok  step=open_member_inquiry checks=[text=MEMBER INQUIRY, frame={'name': 'main'}]
+  · step_ok        index=0 step=open_member_inquiry
+  · step_start     index=1 step=enter_member_number action=fill target=textbox 'Member Number:' note=I'm on the Member Inquiry screen and need to enter member ID {{inputs.member_id}} as the first step toward opening a new sa
+  · resolved       step=enter_member_number strategy=label_near strategy_index=0 control=Member Number:
+  · acted          step=enter_member_number action=fill risk=input value={{inputs.member_id}}
+  · step_ok        index=1 step=enter_member_number
+  · step_start     index=2 step=submit_member_inquiry action=click target=button 'Inquire' note=I've entered the member number {{inputs.member_id}}, so now I need to submit it by clicking the Inquire button to see the member
+  · resolved       step=submit_member_inquiry strategy=role strategy_index=0 control=Inquire
+  · acted          step=submit_member_inquiry action=click risk=submit
+  · checkpoint_ok  step=submit_member_inquiry checks=[text=MEMBER INQUIRY - DETAIL, frame={'name': 'main'}]
+  · step_ok        index=2 step=submit_member_inquiry
+  · step_start     index=3 step=open_new_share action=click target=link 'Open Share' note=I need to open a new savings club share for member {{inputs.member_id}}. The current screen shows the member inquiry details, and I ca
+  · resolved       step=open_new_share strategy=role strategy_index=0 control=Open Share
+  · acted          step=open_new_share action=click risk=read
+  · checkpoint_ok  step=open_new_share checks=[text=SHARE MAINTENANCE - OPEN SHARE, frame={'name': 'main'}]
+  · step_ok        index=3 step=open_new_share
+  · step_start     index=4 step=select_share_type action=click target=combobox 'Share Type' note=I need to select 'SAVINGS CLUB' from the Share Type dropdown as part of opening a new savings club share. The combobox for Shar
+  · resolved       step=select_share_type strategy=label_near strategy_index=0 control=Share Type
+  · acted          step=select_share_type action=click risk=read
+  · checkpoint_ok  step=select_share_type checks=[text=SHARE MAINTENANCE - OPEN SHARE, frame={'name': 'main'}]
+  · step_ok        index=4 step=select_share_type
+  · step_start     index=5 step=select_savings_club action=select target=combobox 'Share Type' note=I've opened the Share Type dropdown and now need to select 'SAVINGS CLUB' as specified in the goal.
+  · resolved       step=select_savings_club strategy=label_near strategy_index=0 control=Share Type
+  · acted          step=select_savings_club action=select risk=input value=SAVINGS CLUB
+  · step_ok        index=5 step=select_savings_club
+  · step_start     index=6 step=enter_nickname action=fill target=textbox 'Nickname' note=Need to enter the nickname '{{inputs.nickname}}' in the Nickname field before proceeding to deposit amount and continuing.
+  · resolved       step=enter_nickname strategy=label_near strategy_index=0 control=Nickname
+  · acted          step=enter_nickname action=fill risk=input value={{inputs.nickname}}
+  · step_ok        index=6 step=enter_nickname
+  · step_start     index=7 step=enter_opening_deposit action=fill target=textbox 'Opening Deposit' note=I need to enter the opening deposit amount of ${{inputs.deposit}} into the Opening Deposit field before clicking Continu
+  · resolved       step=enter_opening_deposit strategy=label_near strategy_index=0 control=Opening Deposit
+  · acted          step=enter_opening_deposit action=fill risk=input value={{inputs.deposit}}
+  · step_ok        index=7 step=enter_opening_deposit
+  · step_start     index=8 step=click_continue action=click target=button 'Continue' note=All required fields have been filled correctly (member ID: {{inputs.member_id}}, nickname: {{inputs.nickname}}, deposit: {{inputs.depo
+  · resolved       step=click_continue strategy=role strategy_index=0 control=Continue
+  · acted          step=click_continue action=click risk=submit
+  · checkpoint_ok  step=click_continue checks=[text=SHARE MAINTENANCE - REVIEW, frame={'name': 'main'}]
+  · step_ok        index=8 step=click_continue
+  · step_start     index=9 step=post_new_share action=click target=button 'Post' note=We've entered all required information correctly, so we need to post this transaction to open the share account.
+  · resolved       step=post_new_share strategy=role strategy_index=0 control=Post
+  · escalated      intervention=c2d060aa reason=approval_required step=post_new_share message=commit action on 'Post' needs a human decision screenshot=evidence/20261011T025403Z-replay-8c2d19/01-approval-post_new_share.png
+  · handoff_resolved intervention=c2d060aa action=abort by=system note=no operator configured waited_s=0.0
+  · run_end        status=failed failure=not_approved events=1 duration_ms=5266
+{
+  "run_id": "20261011T025403Z-replay-8c2d19",
+  "capability": "corelink.share.open_savings_club",
+  "version": "1.0.0",
+  "status": "failed",
+  "outputs": {},
+  "failure": {
+    "kind": "not_approved",
+    "message": "commit action on 'Post' needs a human decision",
+    "step_id": "post_new_share",
+    "step_index": 9,
+    "retryable": false,
+    "evidence": [
+      "evidence/20261011T025403Z-replay-8c2d19/01-approval-post_new_share.png"
+    ]
+  },
+  "events": [
+    {
+      "kind": "handoff",
+      "step_id": "post_new_share",
+      "detail": "approval_required -> abort by system after 0.0s, 0 human action(s)"
+    }
+  ],
+  "steps_completed": 9,
+  "duration_ms": 5266,
+  "evidence_dir": "evidence/20261011T025403Z-replay-8c2d19"
+}

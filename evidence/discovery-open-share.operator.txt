@@ -1,0 +1,3 @@
+[operator] intervention c557c8a7: approval_required — commit action on 'Post' needs a human decision
+[operator] took control
+[operator] handed control back

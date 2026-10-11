@@ -1,0 +1,32 @@
+# frame banner /banner
+- table:
+  - rowgroup:
+    - row "FIRST COMMUNITY FCU CoreLink Teller 7.4 | Operator TELLER01":
+      - cell "FIRST COMMUNITY FCU"
+      - cell "CoreLink Teller 7.4 | Operator TELLER01"
+
+# frame nav /nav
+- table:
+  - rowgroup:
+    - row "Member Inquiry":
+      - cell "Member Inquiry":
+        - link "Member Inquiry":
+          - /url: /inquiry
+    - row "Teller Home":
+      - cell "Teller Home":
+        - link "Teller Home":
+          - /url: /home
+    - row "Sign Off":
+      - cell "Sign Off":
+        - link "Sign Off":
+          - /url: /logout
+
+# frame main /inquiry
+- table:
+  - rowgroup:
+    - row "OPERATOR SECURITY":
+      - cell "OPERATOR SECURITY"
+    - row "Your password expires in 3 days. Change it now? Remind Me Later":
+      - cell "Your password expires in 3 days. Change it now? Remind Me Later":
+        - paragraph: Your password expires in 3 days. Change it now?
+        - button "Remind Me Later"
