@@ -228,6 +228,17 @@ class OutputSpec(Model):
     type: ValueType = ValueType.string
     description: str = ""
     sensitivity: Sensitivity = Sensitivity.pii
+    # Optional regex with one group, applied to the element's text before
+    # coercion: "CONFIRMATION (\d+)" out of "SHARE S01 OPENED. CONFIRMATION 48211".
+    pattern: str | None = None
+
+    def parse(self, raw: str) -> Any:
+        if self.pattern:
+            match = re.search(self.pattern, raw)
+            if not match:
+                raise ValueError(f"{raw!r} does not match {self.pattern}")
+            raw = match.group(1) if match.groups() else match.group(0)
+        return coerce(raw, self.type)
 
 
 def coerce(value: Any, type_: ValueType) -> Any:

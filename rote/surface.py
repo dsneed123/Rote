@@ -339,6 +339,7 @@ class WebSurface:
         self.on_human_event = on_human_event
         self.blocked: list[str] = []      # requests aborted by the allowlist
         self._inflight = 0
+        self._text_cache: dict[Any, tuple[float, str]] = {}
         self._last_activity = 0.0
         self._pw = self._browser = self._context = self._page = None
 
@@ -432,7 +433,7 @@ class WebSurface:
     def location(self) -> dict[str, str]:
         return {self._frame_label(f): urlparse(f.url).path or "/" for f in self._frames()}
 
-    def settle(self, timeout_ms: int = 5_000, quiet_ms: int = 250) -> None:
+    def settle(self, timeout_ms: int = 5_000, quiet_ms: int = 250) -> None:  # noqa: C901
         """Let whatever the last action set off finish, in every frame.
 
         A click returns before the navigation it causes has begun, so "wait for
@@ -441,6 +442,7 @@ class WebSurface:
         Event processing needs the Playwright loop to run, hence the short
         page waits rather than time.sleep.
         """
+        self._text_cache.clear()
         deadline = time.monotonic() + timeout_ms / 1000
         self._last_activity = max(self._last_activity, time.monotonic())
         while time.monotonic() < deadline:
@@ -538,6 +540,10 @@ class WebSurface:
             resolved.handle.click()
         elif action == Action.fill:
             resolved.handle.fill(text or "")
+            # Blur now so the field's change event fires while automation owns
+            # the session; otherwise it fires on the operator's first click
+            # during a handoff and is misattributed to them.
+            resolved.handle.evaluate("el => el.blur()")
         elif action == Action.select:
             try:
                 resolved.handle.select_option(label=text)
@@ -558,16 +564,29 @@ class WebSurface:
 
     # -- checks --
 
+    TEXT_TTL_S = 0.1
+
+    def _body_text(self, frame) -> str | None:
+        """A frame's visible text, cached briefly: one detection pass runs a
+        dozen checks against the same screen. Any action clears the cache."""
+        now = time.monotonic()
+        cached = self._text_cache.get(frame)
+        if cached and now - cached[0] < self.TEXT_TTL_S:
+            return cached[1]
+        try:
+            # evaluate, not locator("body").inner_text(): a frameset document
+            # has no <body>, and a locator would wait for one to appear.
+            text = frame.evaluate("() => document.body ? document.body.innerText : ''")
+        except Exception:
+            text = None   # navigating; cached too, so a detection pass doesn't retry it 12 times
+        self._text_cache[frame] = (now, text)
+        return text
+
     def frame_text(self, ref: FrameRef | None) -> str | None:
         frames = self._frames() if ref is None else [f for f in [self.frame(ref)] if f]
-        if not frames:
+        texts = [t for t in (self._body_text(f) for f in frames) if t is not None]
+        if not texts:
             return None
-        texts = []
-        for frame in frames:
-            try:
-                texts.append(frame.locator("body").inner_text(timeout=2_000))
-            except Exception:
-                continue
         return "\n".join(texts)
 
     def visible_text(self) -> str:
@@ -607,9 +626,9 @@ class WebSurface:
             label = self._frame_label(frame)
             try:
                 found = frame.evaluate(_JS_ENUMERATE, next_id)
-                body = frame.locator("body").inner_text(timeout=2_000)
             except Exception:
                 continue
+            body = self._body_text(frame) or ""
             for item in found:
                 elements.append(Element(frame=label, **item))
             next_id += len(found)

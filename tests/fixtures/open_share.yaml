@@ -1,0 +1,79 @@
+schema_version: rote.capability/v1
+name: corelink.share.open_share
+version: 1.0.0
+title: Open a new share (sub-account) for a member
+app: {product: corelink-teller, versions: "7.4", entry: /main}
+side_effects: irreversible
+inputs:
+  member_id: {type: string, pattern: "\\d{4,9}"}
+  share_type: {type: enum, values: [SAVINGS CLUB, SHARE CERTIFICATE, MONEY MARKET]}
+  nickname: {type: string, required: false, sensitivity: public}
+  opening_deposit: {type: money}
+outputs:
+  confirmation_number: {type: string, sensitivity: internal, pattern: "CONFIRMATION (\\d+)"}
+outcomes:
+  - {code: member_not_found}
+  - {code: validation_error}
+steps:
+  - id: open_member_inquiry
+    action: click
+    target:
+      frame: {name: nav}
+      strategies: [{by: role, role: link, name: Member Inquiry}]
+    expect: [{kind: text, text: MEMBER INQUIRY, frame: {name: main}}]
+  - id: enter_member_number
+    action: fill
+    risk: input
+    value: "{{inputs.member_id}}"
+    target:
+      frame: {name: main}
+      strategies: [{by: label_near, label: "Member Number:"}]
+  - id: submit_inquiry
+    action: click
+    risk: submit
+    target:
+      frame: {name: main}
+      strategies: [{by: role, role: button, name: Inquire}]
+    expect: [{kind: text, text: MEMBER INQUIRY - DETAIL, frame: {name: main}}]
+  - id: open_share_form
+    action: click
+    target:
+      frame: {name: main}
+      strategies: [{by: role, role: link, name: Open Share}]
+    expect: [{kind: text, text: OPEN SHARE, frame: {name: main}}]
+  - id: choose_share_type
+    action: select
+    risk: input
+    value: "{{inputs.share_type}}"
+    target:
+      frame: {name: main}
+      strategies: [{by: label_near, label: Share Type, role: combobox}]
+  - id: enter_opening_deposit
+    action: fill
+    risk: input
+    value: "{{inputs.opening_deposit}}"
+    target:
+      frame: {name: main}
+      strategies: [{by: label_near, label: Opening Deposit}]
+  - id: continue_to_review
+    action: click
+    risk: submit
+    target:
+      frame: {name: main}
+      strategies: [{by: role, role: button, name: Continue}]
+    expect: [{kind: text, text: SHARE MAINTENANCE - REVIEW, frame: {name: main}}]
+  - id: post_share
+    action: click
+    risk: commit
+    target:
+      frame: {name: main}
+      strategies: [{by: role, role: button, name: Post}]
+    expect: [{kind: text, text: OPENED, frame: {name: main}}]
+  - id: read_confirmation
+    action: extract
+    output: confirmation_number
+    target:
+      frame: {name: main}
+      strategies: [{by: text, text: OPENED. CONFIRMATION, exact: false}]
+success:
+  - {kind: text, text: SHARE MAINTENANCE - CONFIRMATION, frame: {name: main}}
