@@ -100,6 +100,50 @@ def describe_checks(checks: list[Check]) -> str:
     return "; ".join(f"[{p}]" for p in parts)
 
 
+class SignOnFailed(Exception):
+    def __init__(self, failure: Failure) -> None:
+        super().__init__(failure.message)
+        self.failure = failure
+
+
+def sign_on(surface: Surface, profile: AppProfile, log: RunLog) -> None:
+    """Run the product's sign-on steps. Shared by replay and discovery.
+
+    Credentials are {{secrets.x}} templates in the profile, resolved by the
+    surface at the moment of typing; they are never seen here.
+    """
+    log.event("sign_on", steps=len(profile.sign_on))
+    for step in profile.sign_on:
+        resolved = surface.resolve(step.target, step.timeout_ms) if step.target else None
+        surface.perform(step.action, resolved, step.value, step.risk, step.id)
+        if step.expect:
+            deadline = time.monotonic() + step.timeout_ms / 1000
+            while not all(surface.holds(c) for c in step.expect):
+                if time.monotonic() > deadline:
+                    raise SignOnFailed(Failure(
+                        kind=FailureKind.checkpoint_failed, step_id=f"sign_on.{step.id}",
+                        message="sign-on did not complete", expected=describe_checks(step.expect),
+                        evidence=log.capture(surface, "sign-on-failed", aria=True)))
+                time.sleep(0.2)
+    if profile.signed_in and not all(surface.holds(c) for c in profile.signed_in):
+        found = detect(surface, profile.detectors)
+        raise SignOnFailed(Failure(
+            kind=FailureKind.checkpoint_failed, step_id="sign_on",
+            message=f"not signed in after sign-on ({found or 'unknown screen'})",
+            evidence=log.capture(surface, "sign-on-failed", aria=True)))
+
+
+def dismiss(surface: Surface, detector: Detector) -> None:
+    """Apply a click or wait remedy. (Re-authentication is the caller's: what to
+    do afterwards — restart a flow, reset a recording — depends on who's asking.)"""
+    recovery = detector.recover
+    if recovery.kind == "click":
+        resolved = surface.resolve(recovery.target, 5_000)
+        surface.perform(Action.click, resolved, None, Risk.submit, f"recover_{detector.code}")
+    elif recovery.kind == "wait_retry":
+        time.sleep(recovery.backoff_ms / 1000)
+
+
 class Replayer:
     def __init__(self, surface: Surface, profile: AppProfile, log: RunLog, redactor: Redactor, *,
                  session: SessionControl | None = None, escalator: Escalator | None = None,
@@ -343,11 +387,8 @@ class Replayer:
                              f"{detector.code} recurred {count} times", expected="", phase=phase)
             return
 
-        if recovery.kind == "click":
-            resolved = self.surface.resolve(recovery.target, 5_000)
-            self.surface.perform(Action.click, resolved, None, Risk.submit, f"recover_{detector.code}")
-        elif recovery.kind == "wait_retry":
-            time.sleep(recovery.backoff_ms / 1000 * count)
+        if recovery.kind in ("click", "wait_retry"):
+            dismiss(self.surface, detector)
         elif recovery.kind == "reauthenticate":
             if self.committed:
                 raise Stop(Status.failed, failure=Failure(
@@ -367,25 +408,10 @@ class Replayer:
             raise Restart()
 
     def _sign_on(self) -> None:
-        self.log.event("sign_on", steps=len(self.profile.sign_on))
-        for step in self.profile.sign_on:
-            resolved = self.surface.resolve(step.target, step.timeout_ms) if step.target else None
-            self.surface.perform(step.action, resolved, step.value, step.risk, step.id)
-            if step.expect:
-                deadline = time.monotonic() + step.timeout_ms / 1000
-                while not all(self.surface.holds(c) for c in step.expect):
-                    if time.monotonic() > deadline:
-                        raise Stop(Status.failed, failure=Failure(
-                            kind=FailureKind.checkpoint_failed, step_id=f"sign_on.{step.id}",
-                            message="sign-on did not complete", expected=describe_checks(step.expect),
-                            evidence=self.log.capture(self.surface, "sign-on-failed", aria=True)))
-                    time.sleep(0.2)
-        if self.profile.signed_in and not all(self.surface.holds(c) for c in self.profile.signed_in):
-            found = detect(self.surface, self.profile.detectors)
-            raise Stop(Status.failed, failure=Failure(
-                kind=FailureKind.checkpoint_failed, step_id="sign_on",
-                message=f"not signed in after sign-on ({found or 'unknown screen'})",
-                evidence=self.log.capture(self.surface, "sign-on-failed", aria=True)))
+        try:
+            sign_on(self.surface, self.profile, self.log)
+        except SignOnFailed as e:
+            raise Stop(Status.failed, failure=e.failure)
 
     # -- the unexpected: escalate or fail --
 

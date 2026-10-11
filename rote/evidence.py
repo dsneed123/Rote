@@ -55,7 +55,8 @@ class RunLog:
                                if k not in ("t", "at", "event") and v not in (None, "", [], {}))
             self.echo(f"{kind:<14} {summary}"[:220])
 
-    def _name(self, label: str, suffix: str) -> Path:
+    def path(self, label: str, suffix: str) -> Path:
+        """The next numbered evidence file path."""
         self._n += 1
         safe = "".join(c if c.isalnum() or c in "-_" else "-" for c in label)[:40]
         return self.dir / f"{self._n:02d}-{safe}{suffix}"
@@ -64,12 +65,12 @@ class RunLog:
         """Screenshot (and optionally ARIA snapshot) of the live surface."""
         paths: list[str] = []
         try:
-            paths.append(str(surface.screenshot(self._name(label, ".png"))))
+            paths.append(str(surface.screenshot(self.path(label, ".png"))))
         except Exception as e:
             self.event("evidence_error", what="screenshot", error=str(e))
         if aria:
             try:
-                path = self._name(label, ".aria.txt")
+                path = self.path(label, ".aria.txt")
                 path.write_text(surface.accessibility_snapshot())
                 paths.append(str(path))
             except Exception as e:
