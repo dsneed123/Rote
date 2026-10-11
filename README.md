@@ -54,7 +54,7 @@ falls back to them only when the target is `localhost`.
   below works offline.
 - **The test suite needs no model.** It drives the real mock app in headless
   Chromium, with a scripted model standing in for the LLM in discovery tests:
-  `pytest -q` runs about 125 tests in about 5 minutes.
+  `pytest -q` runs 162 tests in about 3 minutes.
 - **The real discovery runs are already recorded** in `evidence/`.
 
 ## Demo
